@@ -1,3 +1,5 @@
-/vendor
-/.idea
-/data
+*.env
+.idea/
+vendor/
+example_data
+tests/functional/Fixtures/.fixturesCatalog

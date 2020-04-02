@@ -1,0 +1,11 @@
+,Segment,,Country,Duplicate,Duplicate, Product , Discount Band , Units Sold ,,
+,Government,,Canada,,6, Carretera , None ," $1 618,50 ",,
+,Government,,Germany,,7, Carretera , None ," $1 321,00 ",,
+,Midmarket,,France,,8, Carretera , None ," $2 178,00 ",,
+,Midmarket,,Germany,,9, Carretera , None ," $888,00 ",,
+,Midmarket,(empty header),Mexico,(duplicate header),(duplicate header), Carretera , None ," $2 470,00 ",,
+,Government,,Germany,1,, Carretera , None ," $1 513,00 ",,
+,Midmarket,,Germany,2,, Montana , None ," $921,00 ",,
+,Channel Partners,,Canada,3,, Montana , None ," $2 518,00 ",,x
+,Government,,France,4,, Montana , None ," $1 899,00 ",,y
+,Channel Partners,,Germany,5,, Montana , None ," $1 545,00 ",,z

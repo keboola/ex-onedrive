@@ -1,34 +1,51 @@
 {
-    "require": {
-        "php": "^7.1",
-        "keboola/php-component": "^7.0.1"
-    },
-    "require-dev": {
-        "jakub-onderka/php-parallel-lint": "^1.0",
-        "keboola/coding-standard": ">=7.0.2",
-        "keboola/php-temp": "^1.0",
-        "phpstan/phpstan-shim": "^0.10.6",
-        "phpunit/phpunit": "^7.0",
-        "symfony/process": "^4.0",
-        "keboola/datadir-tests": "^2.0"
-    },
+    "name": "keboola/onedrive-extractor",
+    "type": "project",
+    "license": "MIT",
+    "keywords": [
+        "keboola",
+        "docker",
+        "component",
+        "onedrive"
+    ],
     "autoload": {
         "psr-4": {
-            "MyComponent\\": "src/"
+            "Keboola\\OneDriveExtractor\\": "src/Keboola/OneDriveExtractor"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "MyComponent\\Tests\\": "tests/phpunit/",
-            "MyComponent\\FunctionalTests\\": "tests/functional/"
+            "Keboola\\OneDriveExtractor\\Tests\\": "tests/unit/",
+            "Keboola\\OneDriveExtractor\\FunctionalTests\\": "tests/functional/"
         }
     },
+    "require": {
+        "php": "^7.4",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "keboola/csv": "^2.1",
+        "keboola/php-component": "^8.1",
+        "league/flysystem": "^1.0",
+        "league/flysystem-memory": "^1.0",
+        "microsoft/microsoft-graph": "^1.13",
+        "thenetworg/oauth2-azure": "^1.3"
+    },
+    "require-dev": {
+        "jakub-onderka/php-parallel-lint": "^1.0",
+        "keboola/coding-standard": ">=7.0.2",
+        "keboola/datadir-tests": "^4.0",
+        "keboola/php-temp": "^2.0",
+        "phpstan/phpstan": "^0.12.14",
+        "phpunit/phpunit": "^9.0",
+        "symfony/process": "^5.0"
+    },
     "scripts": {
-        "tests-phpunit": "phpunit",
-        "tests-datadir": "phpunit tests/functional",
+        "tests-unit": "phpunit",
+        "tests-functional": "phpunit tests/functional",
         "tests": [
-            "@tests-phpunit",
-            "@tests-datadir"
+            "@tests-unit",
+            "@tests-functional"
         ],
 
         "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",

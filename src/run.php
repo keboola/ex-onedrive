@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Keboola\Component\UserException;
+use Keboola\CommonExceptions\UserExceptionInterface;
 use Keboola\Component\Logger;
-use MyComponent\Component;
+use Keboola\OneDriveExtractor\Component;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -13,7 +13,7 @@ try {
     $app = new Component($logger);
     $app->execute();
     exit(0);
-} catch (UserException $e) {
+} catch (UserExceptionInterface $e) {
     $logger->error($e->getMessage());
     exit(1);
 } catch (\Throwable $e) {
@@ -24,7 +24,7 @@ try {
             'errLine' => $e->getLine(),
             'errCode' => $e->getCode(),
             'errTrace' => $e->getTraceAsString(),
-            'errPrevious' => $e->getPrevious() ? get_class($e->getPrevious()) : '',
+            'errPrevious' => is_object($e->getPrevious()) ? get_class($e->getPrevious()) : '',
         ]
     );
     exit(2);
