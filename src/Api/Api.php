@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
-use GuzzleHttp\Exception\RequestException;
 use Iterator;
 use ArrayIterator;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
+use Retry\RetryProxy;
+use Retry\BackOff\ExponentialBackOffPolicy;
+use Retry\Policy\CallableRetryPolicy;
+use Microsoft\Graph\Graph;
+use Microsoft\Graph\Http\GraphResponse;
 use Keboola\OneDriveExtractor\Api\Batch\BatchRequest;
 use Keboola\OneDriveExtractor\Api\Model\Drive;
 use Keboola\OneDriveExtractor\Api\Model\File;
@@ -15,16 +19,15 @@ use Keboola\OneDriveExtractor\Api\Model\Site;
 use Keboola\OneDriveExtractor\Api\Model\SheetContent;
 use Keboola\OneDriveExtractor\Api\Model\TableHeader;
 use Keboola\OneDriveExtractor\Api\Model\Worksheet;
-use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Keboola\OneDriveExtractor\Exception\SheetEmptyException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedCountException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
-use Microsoft\Graph\Graph;
-use Microsoft\Graph\Http\GraphResponse;
 
 class Api
 {
+    private const RETRY_HTTP_CODES = [504]; // retry only on Gateway Timeout
+
     private Graph $graphApi;
 
     public function __construct(Graph $graphApi)
@@ -35,9 +38,7 @@ class Api
     public function getAccountName(): string
     {
         $response = $this->get('/me?$select=userPrincipalName')->getBody();
-        $account = $response['userPrincipalName'];
-        assert(is_string($account));
-        return $account;
+        return (string) $response['userPrincipalName'];
     }
 
     public function getWorksheetContent(string $driveId, string $fileId, string $worksheetId): SheetContent
@@ -199,39 +200,52 @@ class Api
 
     public function createBatchRequest(): BatchRequest
     {
-        return new BatchRequest($this->graphApi);
+        return new BatchRequest($this);
     }
 
     public function get(string $uri, array $params = []): GraphResponse
     {
-        try {
-            return $this->execute('GET', Helpers::replaceParamsInUri($uri, $params));
-        } catch (ClientException $e) {
-            $error = Helpers::getErrorFromRequestException($e);
-            if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
-                $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
-                throw new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
-            } elseif ($error && strpos($error, 'ItemNotFound:') === 0) {
-                throw new ResourceNotFoundException('The resource could not be found.', 0, $e);
-            }
-
-            throw $e;
-        }
+        return $this->executeWithRetry('GET', $uri, $params);
     }
 
-    private function execute(string $method, string $uri): GraphResponse
+    public function post(string $uri, array $params = [], array $body = []): GraphResponse
     {
-        $retry = 3;
-        while (true) {
-            try {
-                return $this->graphApi->createRequest($method, $uri)->execute();
-            } catch (RequestException $e) {
-                // Retry only if 504 Gateway Timeout
+        return $this->executeWithRetry('POST', $uri, $params, $body);
+    }
+
+    private function executeWithRetry(string $method, string $uri, array $params = [], array $body = []): GraphResponse
+    {
+        $backOffPolicy = new ExponentialBackOffPolicy(100, 2.0, 2000);
+        $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
+            if ($e instanceof RequestException) {
                 $response = $e->getResponse();
-                if ($retry-- <= 0 || !$response || $response->getStatusCode() !== 504) {
-                    throw $e;
+                // Retry only on defined HTTP codes
+                if ($response && in_array($response->getStatusCode(), self::RETRY_HTTP_CODES, true)) {
+                    return true;
                 }
             }
+
+            return false;
+        });
+
+        $proxy = new RetryProxy($retryPolicy, $backOffPolicy);
+        return $proxy->call(function () use ($method, $uri, $params, $body) {
+            return $this->execute($method, $uri, $params, $body);
+        });
+    }
+
+    private function execute(string $method, string $uri, array $params = [], array $body = []): GraphResponse
+    {
+        $uri = Helpers::replaceParamsInUri($uri, $params);
+        $request = $this->graphApi->createRequest($method, $uri);
+        if ($body) {
+            $request->attachBody($body);
+        }
+
+        try {
+            return $request->execute();
+        } catch (RequestException $e) {
+            throw Helpers::processRequestException($e);
         }
     }
 }

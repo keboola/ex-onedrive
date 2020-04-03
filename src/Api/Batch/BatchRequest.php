@@ -7,6 +7,7 @@ namespace Keboola\OneDriveExtractor\Api\Batch;
 use Iterator;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
+use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
@@ -17,7 +18,7 @@ use Microsoft\Graph\Http\GraphResponse;
  */
 class BatchRequest
 {
-    private Graph $graphApi;
+    private Api $api;
 
     private ?int $limit;
 
@@ -28,9 +29,9 @@ class BatchRequest
     /** @var array|Request[] */
     private array $requests = [];
 
-    public function __construct(Graph $graphApi, ?int $limit = null)
+    public function __construct(Api $api, ?int $limit = null)
     {
-        $this->graphApi = $graphApi;
+        $this->api = $api;
         $this->limit = $limit;
     }
 
@@ -64,7 +65,7 @@ class BatchRequest
             return null;
         }
 
-        return $this->graphApi->createRequest('GET', $nextLink)->execute();
+        return $this->api->get($nextLink);
     }
 
     private function runBatchRequest(): GraphResponse
@@ -72,13 +73,10 @@ class BatchRequest
         $retry = 3;
         while (true) {
             try {
-                return $this->graphApi
-                    ->createRequest('POST', '/$batch')
-                    ->attachBody([
-                        'requests' =>
-                            array_map(fn(Request $request) => $request->toArray(), array_values($this->requests)),
-                    ])
-                    ->execute();
+                return $this->api->post('/$batch', [], [
+                    'requests' =>
+                        array_map(fn(Request $request) => $request->toArray(), array_values($this->requests)),
+                ]);
             } catch (RequestException $e) {
                 // Retry only if 504 Gateway Timeout
                 $response = $e->getResponse();
@@ -107,8 +105,8 @@ class BatchRequest
 
     private function processResponse(Request $request, int $status, array $body): Iterator
     {
-        // Request from batch failed
-        if ($status !== 200) {
+        // Request from batch failed, status != 2xx
+        if ($status < 200 || $status >= 300) {
             throw new BatchRequestException(sprintf(
                 'Unexpected status "%d" for request "%s": %s, %s',
                 $status,

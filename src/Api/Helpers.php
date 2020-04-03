@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
 use Keboola\Component\JsonHelper;
+use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
+use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Psr\Http\Message\MessageInterface;
 
 class Helpers
@@ -62,6 +65,19 @@ class Helpers
         $site = urldecode(rtrim($m[1], '/'));
         $path = $m[2];
         return [$site, $path];
+    }
+
+    public static function processRequestException(RequestException $e): \Throwable
+    {
+        $error = Helpers::getErrorFromRequestException($e);
+        if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
+            $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
+            return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
+        } elseif ($error && strpos($error, 'ItemNotFound:') === 0) {
+            return new ResourceNotFoundException('The resource could not be found.', 0, $e);
+        }
+
+        return $e;
     }
 
     public static function getErrorFromRequestException(RequestException $exception): ?string

@@ -26,6 +26,7 @@
         "ext-mbstring": "*",
         "keboola/csv": "^2.1",
         "keboola/php-component": "^8.1",
+        "keboola/retry": "^0.5.0",
         "league/oauth2-client": "^2.4",
         "microsoft/microsoft-graph": "^1.13"
     },

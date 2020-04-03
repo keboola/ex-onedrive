@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "48fcea049fda0f88136276819aeb2b92",
+    "content-hash": "453554425ae380ac9def7054e84d7718",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -332,6 +332,57 @@
                 "keboola"
             ],
             "time": "2020-03-19T09:26:43+00:00"
+        },
+        {
+            "name": "keboola/retry",
+            "version": "0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/keboola/retry.git",
+                "reference": "afdb190a9186b30a27c75df2aaf24a6de07efebb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/keboola/retry/zipball/afdb190a9186b30a27c75df2aaf24a6de07efebb",
+                "reference": "afdb190a9186b30a27c75df2aaf24a6de07efebb",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1",
+                "psr/log": "^1.1"
+            },
+            "replace": {
+                "vkartaviy/retry": "*"
+            },
+            "require-dev": {
+                "keboola/coding-standard": "^7.0",
+                "phpstan/phpstan-shim": "^0.10",
+                "phpunit/phpunit": "7.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Retry\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Keboola Dev",
+                    "email": "devel@keboola.com"
+                }
+            ],
+            "description": "Library for repeatable and retryable operations",
+            "keywords": [
+                "backoff",
+                "proxy",
+                "repeat",
+                "retry"
+            ],
+            "time": "2020-01-31T14:20:00+00:00"
         },
         {
             "name": "league/oauth2-client",
