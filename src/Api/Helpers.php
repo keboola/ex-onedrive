@@ -106,7 +106,7 @@ class Helpers
 
     public static function truncate(string $value, int $maxLength = 20): string
     {
-        return strlen($value) > $maxLength ? substr($value, 0, $maxLength) . '...' : $value;
+        return mb_strlen($value) > $maxLength ? mb_substr($value, 0, $maxLength) . '...' : $value;
     }
 
     public static function formatIterable(iterable $values, int $maxItems = 20, int $strLength = 30): string

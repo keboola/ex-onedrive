@@ -65,6 +65,30 @@ class HelpersTest extends TestCase
         Assert::assertSame($expected, Helpers::explodeSiteFilePath($input));
     }
 
+    /**
+     * @dataProvider getUris
+     */
+    public function testReplaceParamsInUri(string $uri, array $params, string $expectedUri): void
+    {
+        Assert::assertSame($expectedUri, Helpers::replaceParamsInUri($uri, $params));
+    }
+
+    /**
+     * @dataProvider getStringsForTruncate
+     */
+    public function testTruncate(string $intput, int $maxLength, string $expected): void
+    {
+        Assert::assertSame($expected, Helpers::truncate($intput, $maxLength));
+    }
+
+    /**
+     * @dataProvider getIterables
+     */
+    public function testFormatIterable(iterable $values, int $maxItems, string $expected): void
+    {
+        Assert::assertSame($expected, Helpers::formatIterable($values, $maxItems, 10));
+    }
+
 
     public function getInputs(): array
     {
@@ -171,6 +195,55 @@ class HelpersTest extends TestCase
                 ['special chars abc123čřž#$%_-', 'abc123 čřž#$%_-.xlsx'],
                 'site://special chars abc123čřž#$%_-/abc123 čřž#$%_-.xlsx',
             ],
+        ];
+    }
+
+    public function getUris(): array
+    {
+        return [
+            ['', [], ''],
+            ['http://abc', [], 'http://abc'],
+            ['http://abc/{foo}', [], 'http://abc/{foo}'],
+            ['http://abc/{foo}', ['foo' => 'bar'], 'http://abc/bar'],
+            ['http://abc/{a}/{b}?{c}=value', ['a' => 'd', 'b' => 'e', 'c' => 'f'], 'http://abc/d/e?f=value'],
+            ['http://abc/{foo}', ['foo' => 'one or more spaces'], 'http://abc/one+or+more+spaces'],
+            [
+                'http://abc/{foo}',
+                ['foo' => 'special/chars123úěš!@#'],
+                'http://abc/special%2Fchars123%C3%BA%C4%9B%C5%A1%21%40%23',
+            ],
+        ];
+    }
+
+    public function getStringsForTruncate(): array
+    {
+        return [
+            ['abc', -5, '...'],
+            ['abc', 0, '...'],
+            ['abc', 3, 'abc'],
+            ['abcd', 3, 'abc...'],
+            ['some longer str', 10, 'some longe...'],
+            ['some longer str', 20, 'some longer str'],
+            ['special123úěš!@#', 12, 'special123úě...'],
+            ['special123úěš!@#', 20, 'special123úěš!@#'],
+        ];
+    }
+
+    public function getIterables(): array
+    {
+        return [
+            [[], -5, ''],
+            [[], 0, ''],
+            [[], 10, ''],
+            [['a', 'b', 'c'], 3, '"a", "b", "c"'],
+            [['a', 'b', 'c'], 2, '"a", "b", ...'],
+            [['some long string', 'b', 'c'], 3, '"some long ...", "b", "c"'],
+            [['a', 'some long string', 'c'], 3, '"a", "some long ...", "c"'],
+            [['a', 'b', 'some long string'], 3, '"a", "b", "some long ..."'],
+            [['some long string', 'b', 'c'], 2, '"some long ...", "b", ...'],
+            [['a', 'some long string', 'c'], 2, '"a", "some long ...", ...'],
+            [['a', 'b', 'some long string'], 2, '"a", "b", ...'],
+
         ];
     }
 }

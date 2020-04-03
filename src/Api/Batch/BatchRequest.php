@@ -121,7 +121,7 @@ class BatchRequest
         $values = $mapper ? $mapper($body) : [$body];
         assert($values instanceof Iterator);
         foreach ($values as $key => $value) {
-            // End if over limit
+            // End if over limit (eg. last page has 10 items, but we need only 4)
             if ($this->limit && $this->processedCount >= $this->limit) {
                 break;
             }
