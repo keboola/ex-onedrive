@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Model;
 
+use InvalidArgumentException;
+
 class Worksheet implements \JsonSerializable
 {
     private string $driveId;
@@ -38,6 +40,19 @@ class Worksheet implements \JsonSerializable
         bool $visible,
         ?TableHeader $header = null
     ) {
+        if (strlen($fileId) === 0) {
+            throw new InvalidArgumentException('File id cannot be empty.');
+        }
+        if (strlen($driveId) === 0) {
+            throw new InvalidArgumentException('Drive id cannot be empty.');
+        }
+        if (strlen($worksheetId) === 0) {
+            throw new InvalidArgumentException('Worksheet id cannot be empty.');
+        }
+        if (strlen($name) === 0) {
+            throw new InvalidArgumentException('Worksheet name cannot be empty.');
+        }
+
         $this->driveId = $driveId;
         $this->fileId = $fileId;
         $this->worksheetId = $worksheetId;

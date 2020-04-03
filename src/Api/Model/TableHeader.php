@@ -23,7 +23,7 @@ class TableHeader implements \JsonSerializable
         return new self($start, $end, $columns);
     }
 
-    private static function parseStartEnd(string $address): array
+    public static function parseStartEnd(string $address): array
     {
         // Eg. address = Sheet1!B1:I123 => start=B, end=I
         // ... or eg. A1 if empty file
@@ -34,7 +34,7 @@ class TableHeader implements \JsonSerializable
         return [$start, $end];
     }
 
-    private static function parseColumns(array $columns): array
+    public static function parseColumns(array $columns): array
     {
         $output = [];
         foreach ($columns as $index => $colName) {

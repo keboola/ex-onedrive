@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Model;
 
+use InvalidArgumentException;
+
 class Site
 {
     private string $id;
@@ -17,6 +19,12 @@ class Site
 
     public function __construct(string $id, string $name)
     {
+        if (strlen($id) === 0) {
+            throw new InvalidArgumentException('Site id cannot be empty.');
+        }
+        if (strlen($name) === 0) {
+            throw new InvalidArgumentException('Site name cannot be empty.');
+        }
         $this->id = $id;
         $this->name = $name;
     }

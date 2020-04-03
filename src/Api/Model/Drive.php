@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Model;
 
+use InvalidArgumentException;
+
 class Drive
 {
     private string $id;
@@ -18,6 +20,9 @@ class Drive
 
     public function __construct(string $id, array $path)
     {
+        if (strlen($id) === 0) {
+            throw new InvalidArgumentException('Drive id cannot be empty.');
+        }
         $this->id = $id;
         $this->path = $path;
     }
