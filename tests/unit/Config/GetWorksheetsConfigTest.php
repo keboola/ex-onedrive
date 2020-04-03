@@ -16,7 +16,7 @@ class GetWorksheetsConfigTest extends BaseConfigTest
     public function testValidConfig(array $config): void
     {
         new Config($config, new GetWorksheetsConfigDefinition());
-        $this->addToAssertionCount(1); // Assert no error
+        $this->expectNotToPerformAssertions();
     }
 
     /**
