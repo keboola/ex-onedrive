@@ -61,10 +61,8 @@ class Component extends BaseComponent
 
     protected function handleSearchSyncAction(): array
     {
-        $search = $this->getConfig()->getSearch();
-        assert(is_string($search));
         return [
-            'files' => iterator_to_array($this->api->searchWorkbooks($search)),
+            'files' => iterator_to_array($this->api->searchWorkbooks($this->getConfig()->getSearch())),
         ];
     }
 

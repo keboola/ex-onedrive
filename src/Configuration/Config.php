@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Configuration;
 
+use InvalidArgumentException;
 use Keboola\Component\Config\BaseConfig;
 use Keboola\Component\JsonHelper;
 use Keboola\OneDriveExtractor\Exception\InvalidAuthDataException;
@@ -18,31 +19,55 @@ class Config extends BaseConfig
         $this->customValidation();
     }
 
-    public function getDriveId(): ?string
+    public function hasDriveId(): bool
     {
-        return $this->getValue(['parameters', 'workbook', 'driveId'], '') ?: null;
+        return $this->hasValue(['parameters', 'workbook', 'driveId']);
     }
 
-    public function getFileId(): ?string
+    public function getDriveId(): string
     {
-        return $this->getValue(['parameters', 'workbook', 'fileId'], '') ?: null;
+        return $this->getValue(['parameters', 'workbook', 'driveId']);
     }
 
-    public function getSearch(): ?string
+    public function hasFileId(): bool
     {
-        return $this->getValue(['parameters', 'workbook', 'search'], '') ?: null;
+        return $this->hasValue(['parameters', 'workbook', 'fileId']);
     }
 
-    public function getWorksheetId(): ?string
+    public function getFileId(): string
     {
-        return $this->getValue(['parameters', 'worksheet', 'id'], '') ?: null;
+        return $this->getValue(['parameters', 'workbook', 'fileId']);
     }
 
-    public function getWorksheetPosition(): ?int
+    public function hasSearch(): bool
     {
-        $value = $this->getValue(['parameters', 'worksheet', 'position'], '');
-        // Zero is valid value
-        return $value === '' ? null : $value;
+        return $this->hasValue(['parameters', 'workbook', 'search']);
+    }
+
+    public function getSearch(): string
+    {
+        return $this->getValue(['parameters', 'workbook', 'search']);
+    }
+
+    public function hasWorksheetId(): bool
+    {
+        return $this->hasValue(['parameters', 'worksheet', 'id']);
+    }
+
+    public function getWorksheetId(): string
+    {
+        return $this->getValue(['parameters', 'worksheet', 'id']);
+    }
+
+    public function hasWorksheetPosition(): bool
+    {
+        return $this->hasValue(['parameters', 'worksheet', 'position']);
+    }
+
+
+    public function getWorksheetPosition(): int
+    {
+        return $this->getValue(['parameters', 'worksheet', 'position']);
     }
 
     public function getOutputTable(): string
@@ -69,6 +94,16 @@ class Config extends BaseConfig
                 'Value of "authorization.oauth_api.credentials.#data" must be valid JSON, sample: "%s"',
                 substr($data, 0, 16)
             ));
+        }
+    }
+
+    private function hasValue(array $keys): bool
+    {
+        try {
+            $this->getValue($keys);
+            return true;
+        } catch (InvalidArgumentException $e) {
+            return false;
         }
     }
 

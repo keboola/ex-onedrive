@@ -25,11 +25,10 @@ class SheetProvider
     {
         $config = $this->config;
         $workbook = $this->getFile();
-        $worksheetId = $config->getWorksheetId();
-
-        if (!$worksheetId) {
+        if ($config->hasWorksheetId()) {
+            $worksheetId = $config->getWorksheetId();
+        } else {
             $position = $this->config->getWorksheetPosition();
-            assert(is_int($position));
             $worksheetId = $this->getWorksheetIdByPosition($workbook->getDriveId(), $workbook->getFileId(), $position);
         }
 
@@ -39,13 +38,11 @@ class SheetProvider
     public function getFile(): SheetFile
     {
         $config = $this->config;
-        $driveId = $config->getDriveId();
-        $fileId = $config->getFileId();
-
-        if (!$driveId || !$fileId) {
-            $search = $config->getSearch();
-            assert(is_string($search));
-            [$driveId, $fileId] = $this->searchForFile($search);
+        if ($config->hasDriveId() && $config->hasFileId()) {
+            $driveId = $config->getDriveId();
+            $fileId = $config->getFileId();
+        } else {
+            [$driveId, $fileId] = $this->searchForFile($config->getSearch());
         }
 
         return new SheetFile($driveId, $fileId);

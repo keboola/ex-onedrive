@@ -93,10 +93,8 @@ class BatchRequest
         assert(is_array($responses));
 
         foreach ($responses as $response) {
-            $id = $response['id'];
-            assert(is_string($id));
-            $status = $response['status'];
-            assert(is_int($status));
+            $id = (string) $response['id'];
+            $status = (int) $response['status'];
             $body = $response['body'] ?? [];
             $request = $this->getRequestById($id);
             yield from $this->processResponse($request, $status, $body);

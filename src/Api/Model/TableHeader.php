@@ -42,8 +42,7 @@ class TableHeader implements \JsonSerializable
         $output = [];
         foreach ($columns as $index => $colName) {
             // Normalize column name, fix empty value
-            assert(is_string($colName));
-            $colName = Helpers::toAscii($colName);
+            $colName = Helpers::toAscii((string) $colName);
             $colName = empty($colName) ? 'column-' . ($index + 1) : $colName;
 
             // Prevent duplicates
