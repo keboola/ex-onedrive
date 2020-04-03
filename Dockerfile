@@ -23,10 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& locale-gen \
 	&& chmod +x /tmp/composer-install.sh \
 	&& /tmp/composer-install.sh \
-	&& docker-php-ext-install sockets mbstring intl \
-	&& apt-get clean
-
-COPY docker/php-prod.ini /usr/local/etc/php/php.ini
+	&& docker-php-ext-install sockets mbstring intl
 
 ENV LANGUAGE=en_US.UTF-8
 ENV LANG=en_US.UTF-8
