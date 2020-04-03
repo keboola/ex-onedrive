@@ -31,14 +31,13 @@ class AuthTest extends BaseTest
      * @dataProvider getInvalidCredentials
      */
     public function testInvalidCredentials(
-        string $expectedExceptionClass,
         string $expectedExceptionMsg,
         string $appId,
         string $appSecret,
         string $accessToken,
         string $refreshToken
     ): void {
-        $this->expectException($expectedExceptionClass);
+        $this->expectException(AccessTokenRefreshException::class);
         $this->expectExceptionMessage($expectedExceptionMsg);
         $this->apiFactory->create(
             $appId,
@@ -51,12 +50,11 @@ class AuthTest extends BaseTest
      * @dataProvider getInvalidAuthData
      */
     public function testInvalidAuthDataFormat(
-        string $expectedExceptionClass,
         string $expectedExceptionMsg,
         array $data
     ): void {
         // Try auth with invalid app-id
-        $this->expectException($expectedExceptionClass);
+        $this->expectException(AccessTokenInitException::class);
         $this->expectExceptionMessage($expectedExceptionMsg);
         $appId = (string) getenv('OAUTH_APP_ID');
         $appSecret = (string) getenv('OAUTH_APP_SECRET');
@@ -87,7 +85,6 @@ class AuthTest extends BaseTest
     {
         return [
             'invalid-app-id' => [
-                AccessTokenRefreshException::class,
                 'Microsoft OAuth API token refresh failed, ' .
                 'please reset authorization in the extractor configuration.',
                 'invalid-app-id',
@@ -96,7 +93,6 @@ class AuthTest extends BaseTest
                 getenv('OAUTH_REFRESH_TOKEN'),
             ],
             'invalid-app-secret' => [
-                AccessTokenRefreshException::class,
                 'Microsoft OAuth API token refresh failed, ' .
                 'please reset authorization in the extractor configuration.',
                 getenv('OAUTH_APP_ID'),
@@ -105,7 +101,6 @@ class AuthTest extends BaseTest
                 getenv('OAUTH_REFRESH_TOKEN'),
             ],
             'invalid-refresh-token' => [
-                AccessTokenRefreshException::class,
                 'Microsoft OAuth API token refresh failed, ' .
                 'please reset authorization in the extractor configuration.',
                 getenv('OAUTH_APP_ID'),
@@ -120,19 +115,16 @@ class AuthTest extends BaseTest
     {
         return [
             'empty-data' => [
-                AccessTokenInitException::class,
                 'Missing key "access_token", "refresh_token" in OAuth data array.',
                 [],
             ],
             'missing-access-token' => [
-                AccessTokenInitException::class,
                 'Missing key "access_token" in OAuth data array.',
                 [
                     'refresh_token' => getenv('OAUTH_REFRESH_TOKEN'),
                 ],
             ],
             'missing-refresh-token' => [
-                AccessTokenInitException::class,
                 'Missing key "refresh_token" in OAuth data array.',
                 [
                     'access_token' => getenv('OAUTH_ACCESS_TOKEN'),

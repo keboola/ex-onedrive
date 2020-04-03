@@ -3,4 +3,3 @@ parameters:
     checkGenericClassInNonGenericObjectType: false
     ignoreErrors:
         - '#Symfony\\Component\\Config\\Definition\\Builder\\NodeParentInterface\|null#'
-        - '#expects class-string<Throwable>, string given#'
