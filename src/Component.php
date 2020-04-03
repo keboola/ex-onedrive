@@ -24,7 +24,7 @@ class Component extends BaseComponent
     {
         parent::__construct($logger);
         $config = $this->getConfig();
-        $apiFactory = new ApiFactory();
+        $apiFactory = new ApiFactory($logger);
         $this->api = $apiFactory->create(
             $config->getOAuthApiAppKey(),
             $config->getOAuthApiAppSecret(),

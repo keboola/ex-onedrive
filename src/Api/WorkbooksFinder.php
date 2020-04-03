@@ -10,6 +10,7 @@ use Keboola\OneDriveExtractor\Api\Model\File;
 use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Keboola\OneDriveExtractor\Exception\ShareLinkException;
+use Psr\Log\LoggerInterface;
 
 class WorkbooksFinder
 {
@@ -20,9 +21,12 @@ class WorkbooksFinder
 
     private Api $api;
 
-    public function __construct(Api $api)
+    private LoggerInterface $logger;
+
+    public function __construct(Api $api, LoggerInterface $logger)
     {
         $this->api = $api;
+        $this->logger = $logger;
     }
 
     /**
@@ -31,26 +35,45 @@ class WorkbooksFinder
     public function search(string $search): Iterator
     {
         try {
-            if (Helpers::isFilePath($search)) {
+            switch (true) {
                 // Drive path, eg. "/path/to/file.xlsx"
-                yield from $this->searchByPathInMeDrive($search);
-            } elseif (Helpers::isDriveFilePath($search)) {
+                case Helpers::isFilePath($search):
+                    $this->log('Searching for "%s" in personal OneDrive.', $search);
+                    yield from $this->searchByPathInMeDrive($search);
+                    break;
+
                 // Site path, eg. "drive://1234driveId6789/path/to/file.xlsx"
-                [$driveId, $path] = Helpers::explodeDriveFilePath($search);
-                $prefix = '/drives/' . urlencode($driveId);
-                yield from $this->searchByPathInDrive($prefix, $path, []);
-            } elseif (Helpers::isSiteFilePath($search)) {
+                case Helpers::isDriveFilePath($search):
+                    [$driveId, $path] = Helpers::explodeDriveFilePath($search);
+                    $this->log(
+                        'Searching for "%s" in drive "%s".',
+                        $path,
+                        Helpers::truncate($driveId, 15)
+                    );
+                    yield from $this->searchByPathInDrive('/drives/' . urlencode($driveId), $path, []);
+                    break;
+
                 // Site path, eg. "site://Excel Sheets/path/to/file.xlsx"
-                yield from $this->searchByPathInSite($search);
-            } elseif (Helpers::isHttpsUrl($search)) {
+                case Helpers::isSiteFilePath($search):
+                    [$siteName, $path] = Helpers::explodeSiteFilePath($search);
+                    $this->log('Searching for "%s" in site "%s".', $path, $siteName);
+                    yield from $this->searchByPathInSite($siteName, $path);
+                    break;
+
                 // Https url, eg: "https://keboolads.sharepoint.com/..."
-                yield from $this->searchByUrl($search);
-            } else {
-                // Search for file
-                yield from $this->searchByText($search);
+                case Helpers::isHttpsUrl($search):
+                    $this->log('Searching by link "%s".', Helpers::truncate($search, 20));
+                    yield from $this->searchByUrl($search);
+                    break;
+
+                // Search for file by text in all locations
+                default:
+                    $this->log('Searching for "%s" in all locations.', $search);
+                    yield from $this->searchByText($search);
+                    break;
             }
         } catch (ResourceNotFoundException $e) {
-            yield from [];
+            yield from  [];
         }
     }
 
@@ -65,9 +88,8 @@ class WorkbooksFinder
     /**
      * @return Iterator|File[]
      */
-    private function searchByPathInSite(string $fullPath): Iterator
+    private function searchByPathInSite(string $siteName, string $path): Iterator
     {
-        [$siteName, $path] = Helpers::explodeSiteFilePath($fullPath);
         $site = $this->api->getSite($siteName);
         $prefix = '/sites/' . urlencode($site->getId()) .  '/drive';
         return $this->searchByPathInDrive($prefix, $path, ['sites', $siteName]);
@@ -197,6 +219,14 @@ class WorkbooksFinder
                 yield File::from($file, $path);
             }
         };
+    }
+
+    /**
+     * @param mixed ...$args args for sprintf
+     */
+    private function log(...$args): void
+    {
+        $this->logger->info(sprintf(...$args));
     }
 
     private static function checkFileMimeType(array $body): void

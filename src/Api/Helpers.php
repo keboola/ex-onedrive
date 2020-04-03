@@ -103,4 +103,30 @@ class Helpers
         }
         return $uri;
     }
+
+    public static function truncate(string $value, int $maxLength = 20): string
+    {
+        return strlen($value) > $maxLength ? substr($value, 0, $maxLength) . '...' : $value;
+    }
+
+    public static function formatIterable(iterable $values, int $maxItems = 20, int $strLength = 30): string
+    {
+        $out = '';
+        $i = 0;
+        foreach ($values as $value) {
+            // Append '...' if there are more items
+            if ($i >= $maxItems) {
+                $out .= ', ...';
+                break;
+            }
+
+            // Truncate item length
+            $value = self::truncate($value, $strLength);
+
+            $out .= $i === 0 ? "\"{$value}\"" : ", \"{$value}\"";
+            $i++;
+        }
+
+        return $out;
+    }
 }

@@ -7,6 +7,7 @@ namespace Keboola\OneDriveExtractor\Api;
 use Iterator;
 use ArrayIterator;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
 use Retry\BackOff\ExponentialBackOffPolicy;
 use Retry\Policy\CallableRetryPolicy;
@@ -30,9 +31,12 @@ class Api
 
     private Graph $graphApi;
 
-    public function __construct(Graph $graphApi)
+    private LoggerInterface $logger;
+
+    public function __construct(Graph $graphApi, LoggerInterface $logger)
     {
         $this->graphApi = $graphApi;
+        $this->logger = $logger;
     }
 
     public function getAccountName(): string
@@ -64,8 +68,15 @@ class Api
             throw new SheetEmptyException('Spreadsheet is empty.');
         }
 
-        // Load rows in parts
+        // Convert to iterator (in will be able to load per parts in future)
         $iterator = new ArrayIterator($rows);
+
+        // Log
+        $this->logger->info(sprintf(
+            'Loaded sheet with %d rows, header: %s',
+            $iterator->count(),
+            Helpers::formatIterable($header->getColumns())
+        ));
 
         // Encapsulate
         return SheetContent::from($header, $iterator);
@@ -73,38 +84,55 @@ class Api
 
     public function getWorksheetHeader(string $driveId, string $fileId, string $worksheetId): TableHeader
     {
-        // Table header is first row from worksheet
+        // Table header is first row in worksheet
         // Table can be shifted because we use "usedRange".
         $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
         $uri = $endpoint . '/usedRange(valuesOnly=true)/row(row=0)?$select=address,text';
         $body = $this
             ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheetId])
             ->getBody();
-        return TableHeader::from($body['address'], $body['text'][0]);
+        $header = TableHeader::from($body['address'], $body['text'][0]);
+
+        // Log
+        $this->logger->info(sprintf('Loaded sheet header: %s', Helpers::formatIterable($header->getColumns())));
+
+        return $header;
     }
 
-    public function getWorksheetId(string $driveId, string $fileId, int $worksheetPosition): string
+    public function getWorksheetId(string $driveId, string $fileId, int $position): string
     {
-        if ($worksheetPosition < 0) {
+        // Check position value, must be greater than zero
+        if ($position < 0) {
             throw new UnexpectedValueException(sprintf(
                 'Worksheet position must be greater than zero. Given "%d".',
-                $worksheetPosition
+                $position
             ));
         }
 
         // Load list of worksheets in workbook
-        $uri = '/drives/{driveId}/items/{fileId}/workbook/worksheets?$select=id,position';
-        $body = $this
-            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId])
-            ->getBody();
+        $uri = '/drives/{driveId}/items/{fileId}/workbook/worksheets?$select=id,name,position';
+        $body = $this->get($uri, ['driveId' => $driveId, 'fileId' => $fileId])->getBody();
 
+        // Search by position
+        $worksheet = null;
         foreach ($body['value'] as $data) {
-            if ($data['position'] === $worksheetPosition) {
-                return $data['id'];
+            if ($data['position'] === $position) {
+                $worksheet = $data;
+                break;
             }
         }
 
-        throw new ResourceNotFoundException(sprintf('No worksheet at position "%d".', $worksheetPosition));
+        // Log and return
+        if ($worksheet) {
+            $this->logger->info(sprintf(
+                'Found worksheet "%s" at position "%s".',
+                $worksheet['name'],
+                $position
+            ));
+            return $worksheet['id'];
+        }
+
+        throw new ResourceNotFoundException(sprintf('No worksheet at position "%d".', $position));
     }
 
     /**
@@ -194,7 +222,7 @@ class Api
      */
     public function searchWorkbooks(string $search = ''): Iterator
     {
-        $finder = new WorkbooksFinder($this);
+        $finder = new WorkbooksFinder($this, $this->logger);
         return $finder->search($search);
     }
 

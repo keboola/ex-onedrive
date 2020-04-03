@@ -8,6 +8,7 @@ use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Api\ApiFactory;
 use Keboola\OneDriveExtractor\FunctionalTests\Fixtures\FixturesCatalog;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 abstract class BaseTest extends TestCase
 {
@@ -22,7 +23,8 @@ abstract class BaseTest extends TestCase
         parent::setUp();
 
         $this->checkEnvironment(['OAUTH_APP_ID', 'OAUTH_APP_SECRET', 'OAUTH_ACCESS_TOKEN', 'OAUTH_REFRESH_TOKEN']);
-        $this->apiFactory = new ApiFactory();
+        $logger = new NullLogger();
+        $this->apiFactory = new ApiFactory($logger);
         $this->api = $this->createApi();
         $this->fixtures = FixturesCatalog::load();
     }
