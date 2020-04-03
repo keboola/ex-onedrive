@@ -74,6 +74,14 @@ class HelpersTest extends TestCase
     }
 
     /**
+     * @dataProvider getApiPathInputs
+     */
+    public function testConvertPathToApiFormat(string $input, string $expected): void
+    {
+        Assert::assertSame($expected, Helpers::convertPathToApiFormat($input));
+    }
+
+    /**
      * @dataProvider getToAsciiInputs
      */
     public function testToAscii(string $intput, string $expected): void
@@ -96,7 +104,6 @@ class HelpersTest extends TestCase
     {
         Assert::assertSame($expected, Helpers::formatIterable($values, $maxItems, 10));
     }
-
 
     public function getInputs(): array
     {
@@ -220,6 +227,18 @@ class HelpersTest extends TestCase
                 ['foo' => 'special/chars123úěš!@#'],
                 'http://abc/special%2Fchars123%C3%BA%C4%9B%C5%A1%21%40%23',
             ],
+        ];
+    }
+
+    public function getApiPathInputs(): array
+    {
+        return [
+            ['', '/'],
+            ['/', '/'],
+            ['abc', ':/abc:/'],
+            ['/abc', ':/abc:/'],
+            ['path/to/file.xlsx', ':/path/to/file.xlsx:/'],
+            ['/path/to/file.xlsx', ':/path/to/file.xlsx:/'],
         ];
     }
 

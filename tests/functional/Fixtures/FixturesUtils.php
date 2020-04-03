@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\FunctionalTests\Fixtures;
 
 use Iterator;
+use Keboola\OneDriveExtractor\Api\Helpers;
 use Throwable;
 use RuntimeException;
 use GuzzleHttp\Exception\ClientException;
@@ -187,8 +188,7 @@ class FixturesUtils
     private function pathToUrl(string $driveId, string $path): string
     {
         $driveId = urlencode($driveId);
-        $path = trim($path, '/');
-        $path = $path ? (':/' . trim($path, '/') . ':/') : '/';
+        $path = Helpers::convertPathToApiFormat($path);
         return "/drives/{$driveId}/root{$path}";
     }
 

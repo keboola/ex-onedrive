@@ -104,6 +104,16 @@ class Helpers
         return $uri;
     }
 
+    public static function convertPathToApiFormat(string $path): string
+    {
+        // API use special path format:
+        // eg. root path: /me/drive/root/children ... output of this fn is "/"
+        // eg. absolute path /me/drive/root:/path/to/folder:/children ... output of this fn is ":/path/to/folder:/"
+        $path = trim($path, '/');
+        $path = $path ? (":/{$path}:/") : '/';
+        return $path;
+    }
+
     public static function toAscii(string $str): string
     {
         $str = Normalizer::normalize($str, Normalizer::FORM_D);

@@ -100,8 +100,7 @@ class WorkbooksFinder
      */
     private function searchByPathInDrive(string $drivePrefix, string $path, array $pathPrefix): Iterator
     {
-        $path = ltrim($path, '/');
-        $path = $path ? (':/' . trim($path, '/') . ':/') : '/';
+        $path = Helpers::convertPathToApiFormat($path);
         $url = "{$drivePrefix}/root{$path}?\$select=id,name,parentReference,file";
         $body = $this->api->get($url)->getBody();
 
