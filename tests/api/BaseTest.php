@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\Api;
+namespace Keboola\OneDriveExtractor\ApiTests;
 
 use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Api\ApiFactory;
-use Keboola\OneDriveExtractor\FunctionalTests\Fixtures\FixturesCatalog;
+use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 

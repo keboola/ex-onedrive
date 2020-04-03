@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\Api;
+namespace Keboola\OneDriveExtractor\ApiTests;
 
 use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
-use Keboola\OneDriveExtractor\FunctionalTests\Fixtures;
+use Keboola\OneDriveExtractor\Fixtures;
 use PHPUnit\Framework\Assert;
 
 class GetSheetsTest extends BaseTest

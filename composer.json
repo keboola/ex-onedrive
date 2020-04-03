@@ -15,8 +15,10 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Keboola\\OneDriveExtractor\\Tests\\": "tests/unit/",
-            "Keboola\\OneDriveExtractor\\FunctionalTests\\": "tests/functional/"
+            "Keboola\\OneDriveExtractor\\Fixtures\\": "tests/fixtures/",
+            "Keboola\\OneDriveExtractor\\Tests\\": "tests/phpunit/",
+            "Keboola\\OneDriveExtractor\\ApiTests\\": "tests/api/",
+            "Keboola\\OneDriveExtractor\\DataDirTests\\": "tests/datadir/"
         }
     },
     "require": {
@@ -40,11 +42,13 @@
         "symfony/process": "^5.0"
     },
     "scripts": {
-        "tests-unit": "phpunit",
-        "tests-functional": "phpunit tests/functional",
+        "tests-phpunit": "phpunit",
+        "tests-api": "phpunit tests/api",
+        "tests-datadir": "phpunit tests/datadir",
         "tests": [
-            "@tests-unit",
-            "@tests-functional"
+            "@tests-phpunit",
+            "@tests-api",
+            "@tests-datadir"
         ],
 
         "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",

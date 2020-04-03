@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\DataDir;
+namespace Keboola\OneDriveExtractor\DataDirTests;
 
 use PHPUnit\Framework\SkippedTestError;
 use RuntimeException;
 use ReflectionClass;
-use Keboola\OneDriveExtractor\FunctionalTests\Fixtures\FixturesCatalog;
+use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
 use Keboola\DatadirTests\AbstractDatadirTestCase;
 use Keboola\DatadirTests\DatadirTestSpecificationInterface;
 use Keboola\DatadirTests\DatadirTestsProviderInterface;
@@ -163,6 +163,6 @@ class DatadirTest extends AbstractDatadirTestCase
 
     protected function getScript(): string
     {
-        return $this->getTestFileDir() . '/../../../src/run.php';
+        return $this->getTestFileDir() . '/../../src/run.php';
     }
 }

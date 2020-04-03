@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\Fixtures;
+namespace Keboola\OneDriveExtractor\Fixtures;
 
 use InvalidArgumentException;
 

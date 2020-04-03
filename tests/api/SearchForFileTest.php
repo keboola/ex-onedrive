@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\Api;
+namespace Keboola\OneDriveExtractor\ApiTests;
 
 use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ShareLinkException;
-use Keboola\OneDriveExtractor\FunctionalTests\Fixtures\FixturesCatalog;
+use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\SkippedTestError;
 

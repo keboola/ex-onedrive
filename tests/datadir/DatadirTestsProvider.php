@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\DataDir;
+namespace Keboola\OneDriveExtractor\DataDirTests;
 
 use Keboola\DatadirTests\DatadirTestsFromDirectoryProvider;
 use Keboola\DatadirTests\DatadirTestSpecification;

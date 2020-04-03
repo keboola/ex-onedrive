@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\Api;
+namespace Keboola\OneDriveExtractor\ApiTests;
 
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
-use Keboola\OneDriveExtractor\FunctionalTests\Fixtures\FixturesCatalog;
+use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
 use PHPUnit\Framework\Assert;
 
 class GetSheetIdTest extends BaseTest

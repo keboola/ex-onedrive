@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OneDriveExtractor\FunctionalTests\Api;
+namespace Keboola\OneDriveExtractor\ApiTests;
 
 use Keboola\OneDriveExtractor\Exception\AccessTokenInitException;
 use Keboola\OneDriveExtractor\Exception\AccessTokenRefreshException;
