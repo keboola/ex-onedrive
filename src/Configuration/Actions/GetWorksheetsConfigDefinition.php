@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\Configuration\Actions;
 
 use Keboola\Component\Config\BaseConfigDefinition;
+use Keboola\OneDriveExtractor\Configuration\Parts\WorkbookDefinition;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
@@ -20,15 +21,7 @@ class GetWorksheetsConfigDefinition extends BaseConfigDefinition
         $parametersNode
             ->children()
                 // Workbook is one XLSX file
-                ->arrayNode('workbook')
-                    ->isRequired()
-                    ->children()
-                        // Workbook is specified by driveId, fileId
-                        ->scalarNode('driveId')->cannotBeEmpty()->end()
-                        ->scalarNode('fileId')->cannotBeEmpty()->end()
-                        // ... OR by search (path, download url, ...)
-                        ->scalarNode('search')->cannotBeEmpty()->end()
-                ->end()
+                ->append(WorkbookDefinition::getDefinition())
             ->end();
         // @formatter:on
 

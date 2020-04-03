@@ -48,8 +48,8 @@ class Component extends BaseComponent
     protected function getSyncActions(): array
     {
         return [
-            'search' => 'handleSearchSyncAction',
-            'getWorksheets' => 'handleGetWorksheetsSyncAction',
+            self::ACTION_SEARCH => 'handleSearchSyncAction',
+            self::ACTION_GET_WORKSHEETS => 'handleGetWorksheetsSyncAction',
         ];
     }
 

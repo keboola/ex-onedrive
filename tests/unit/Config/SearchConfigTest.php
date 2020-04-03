@@ -32,13 +32,25 @@ class SearchConfigTest extends BaseConfigTest
     public function validConfigProvider(): array
     {
         return [
-            'valid' => [
+            'valid-search' => [
                 [
                     'action' => 'search',
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'workbook' => [
                             'search' => '/path/to/file',
+                        ],
+                    ],
+                ],
+            ],
+            'valid-ids' => [
+                [
+                    'action' => 'search',
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '...',
+                            'fileId' => '...',
                         ],
                     ],
                 ],
@@ -79,7 +91,7 @@ class SearchConfigTest extends BaseConfigTest
                 ],
             ],
             'empty-workbook' => [
-                'The child node "search" at path "root.parameters.workbook" must be configured.',
+                'In config must be present "workbook.search" OR ("workbook.driveId" and "workbook.fileId").',
                 [
                     'action' => 'search',
                     'authorization' => $this->getValidAuthorization(),
