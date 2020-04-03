@@ -37,7 +37,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -54,7 +53,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -72,7 +70,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -119,7 +116,6 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -151,7 +147,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'worksheet' => [
@@ -166,7 +161,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -181,7 +175,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -199,7 +192,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -218,7 +210,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [
@@ -238,7 +229,6 @@ class RunConfigTest extends BaseConfigTest
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
                         'output' => [
-                            'bucket' => 'in.c-test',
                             'table' => 'sheet-table',
                         ],
                         'workbook' => [

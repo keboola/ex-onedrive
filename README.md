@@ -8,9 +8,8 @@ Extracts spreadsheets from OneDrive
 
 The configuration `config.json` contains following properties in `parameters` key: 
 
-- `output` - object (required): Target table
-    - `bucket` - string (optional): target bucket, if not present, default bucket is used
-    - `table` - string (required): target table
+- `output` - object (required):
+    - `table` - string (required): Target table
 - `workbook` - object (required): Workbook `XLSX` file
    - One of [`driveId` and `fileId`] or `search` must be configured.
     - `driveId` - string: id of [drive resource](https://docs.microsoft.com/en-us/graph/api/resources/drive?view=graph-rest-1.0)    
@@ -50,7 +49,6 @@ Otherwise, an error is returned.
   "authorization": {"oauth_api":  "..."},
   "parameters": {
     "output": {
-      "bucket": "in.c-test",
       "table": "sheet-table"
     },
     "workbook": {

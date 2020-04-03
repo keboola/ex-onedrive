@@ -10,7 +10,6 @@
   },
   "parameters": {
     "output": {
-      "bucket": "in.c-test",
       "table": "sheet-table"
     },
     "workbook": {

@@ -21,8 +21,6 @@ class Extractor
 
     private string $outputDir;
 
-    private ?string $outputBucket;
-
     private string $outputTable;
 
     public function __construct(
@@ -30,14 +28,12 @@ class Extractor
         ManifestManager $manifestManager,
         Api $api,
         string $dataDir,
-        ?string $outputBucket,
         string $outputTable
     ) {
         $this->logger = $logger;
         $this->manifestManager = $manifestManager;
         $this->api = $api;
         $this->outputDir = $dataDir . '/out/tables';
-        $this->outputBucket = $outputBucket;
         $this->outputTable = $outputTable;
     }
 
@@ -64,10 +60,6 @@ class Extractor
         // Write manifest
         $options = new OutTableManifestOptions();
         $options->setColumns($sheetContent->getHeader()->getColumns());
-        // Set destination bucket if defined, otherwise will be used default bucket
-        if ($this->outputBucket) {
-            $options->setDestination(sprintf('%s.%s', $this->outputBucket, $this->outputTable));
-        }
         $this->manifestManager->writeTableManifest($csvFile, $options);
     }
 }

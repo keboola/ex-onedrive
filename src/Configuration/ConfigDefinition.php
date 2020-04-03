@@ -25,9 +25,7 @@ class ConfigDefinition extends BaseConfigDefinition
                 ->arrayNode('output')
                     ->isRequired()
                     ->children()
-                        // Default bucked is used when no bucket name is specified
-                        ->scalarNode('bucket')->cannotBeEmpty()->end()
-                        // Output table is required
+                        // Output table is required, XLSX file name cannot always be used
                         ->scalarNode('table')->isRequired()->cannotBeEmpty()->end()
                     ->end()
                 ->end()

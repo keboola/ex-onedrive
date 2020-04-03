@@ -45,11 +45,6 @@ class Config extends BaseConfig
         return $value === '' ? null : $value;
     }
 
-    public function getOutputBucket(): ?string
-    {
-        return $this->getValue(['parameters', 'output', 'bucket'], '') ?: null;
-    }
-
     public function getOutputTable(): string
     {
         return $this->getValue(['parameters', 'output', 'table']);
