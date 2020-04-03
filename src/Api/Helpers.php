@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
-use GuzzleHttp\Exception\ClientException;
+use Normalizer;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
 use Keboola\Component\JsonHelper;
@@ -102,6 +102,15 @@ class Helpers
             $uri = str_replace("{{$key}}", urlencode((string) $value), $uri);
         }
         return $uri;
+    }
+
+    public static function toAscii(string $str): string
+    {
+        $str = Normalizer::normalize($str, Normalizer::FORM_D);
+        $str = (string) preg_replace('~\pM~u', '', $str);
+        $str = (string) preg_replace('~[^a-zA-Z0-9\-.]+~', '_', $str);
+        $str = trim($str, '_');
+        return $str;
     }
 
     public static function truncate(string $value, int $maxLength = 20): string

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Model;
 
-use Normalizer;
-use function PHPUnit\Framework\assertSame;
+use InvalidArgumentException;
+use Keboola\OneDriveExtractor\Api\Helpers;
 
 class TableHeader implements \JsonSerializable
 {
@@ -27,8 +27,11 @@ class TableHeader implements \JsonSerializable
     {
         // Eg. address = Sheet1!B1:I123 => start=B, end=I
         // ... or eg. A1 if empty file
-        preg_match('~!([A-Z]+)(?:[0-9]+)?(?::([A-Z]+)(?:[0-9]+)?)?$~', $address, $m);
-        assert(!empty($m));
+        preg_match('~!?([A-Z]+)(?:[0-9]+)?(?::([A-Z]+)(?:[0-9]+)?)?$~', $address, $m);
+        if (empty($m)) {
+            throw new InvalidArgumentException(sprintf('Unexpected input: "%s"', $address));
+        }
+
         $start = $m[1];
         $end = $m[2] ?? $start;
         return [$start, $end];
@@ -40,14 +43,14 @@ class TableHeader implements \JsonSerializable
         foreach ($columns as $index => $colName) {
             // Normalize column name, fix empty value
             assert(is_string($colName));
-            $colName = trim(self::toAscii($colName), " _\t\n\r\0\x0B");
+            $colName = Helpers::toAscii($colName);
             $colName = empty($colName) ? 'column-' . ($index + 1) : $colName;
 
             // Prevent duplicates
             $i = 1;
             $orgColName = $colName;
             while (in_array($colName, $output, true)) {
-                $colName = "{$orgColName}-$i";
+                $colName = $orgColName . '-' . $i++;
             }
 
             // Store
@@ -81,13 +84,5 @@ class TableHeader implements \JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->columns;
-    }
-
-    private static function toAscii(string $str): string
-    {
-        $str = Normalizer::normalize($str, Normalizer::FORM_D);
-        $str = (string) preg_replace('~\pM~u', '', $str);
-        $str = (string) preg_replace('~[^a-zA-Z0-9\-.]+~', '_', $str);
-        return $str;
     }
 }

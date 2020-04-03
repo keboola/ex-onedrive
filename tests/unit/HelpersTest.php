@@ -66,11 +66,19 @@ class HelpersTest extends TestCase
     }
 
     /**
-     * @dataProvider getUris
+     * @dataProvider getReplaceParamsInUriInputs
      */
     public function testReplaceParamsInUri(string $uri, array $params, string $expectedUri): void
     {
         Assert::assertSame($expectedUri, Helpers::replaceParamsInUri($uri, $params));
+    }
+
+    /**
+     * @dataProvider getToAsciiInputs
+     */
+    public function testToAscii(string $intput, string $expected): void
+    {
+        Assert::assertSame($expected, Helpers::toAscii($intput));
     }
 
     /**
@@ -198,7 +206,7 @@ class HelpersTest extends TestCase
         ];
     }
 
-    public function getUris(): array
+    public function getReplaceParamsInUriInputs(): array
     {
         return [
             ['', [], ''],
@@ -212,6 +220,18 @@ class HelpersTest extends TestCase
                 ['foo' => 'special/chars123úěš!@#'],
                 'http://abc/special%2Fchars123%C3%BA%C4%9B%C5%A1%21%40%23',
             ],
+        ];
+    }
+
+    public function getToAsciiInputs(): array
+    {
+        return [
+            ['', ''],
+            ['aBc', 'aBc'],
+            ['!@#', ''],
+            ['úěš', 'ues'],
+            ['指事字', ''],
+            ["a\n\tb_xy", 'a_b_xy'],
         ];
     }
 
