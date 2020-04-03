@@ -16,6 +16,11 @@ use Keboola\OneDriveExtractor\Configuration\ConfigDefinition;
 
 class Component extends BaseComponent
 {
+    public const
+        ACTION_RUN = 'run',
+        ACTION_SEARCH = 'search',
+        ACTION_GET_WORKSHEETS = 'getWorksheets';
+
     private Api $api;
 
     private SheetProvider $sheetProvider;
@@ -81,11 +86,11 @@ class Component extends BaseComponent
     {
         $action = $this->getRawConfig()['action'] ?? 'run';
         switch ($action) {
-            case 'run':
+            case self::ACTION_RUN:
                 return ConfigDefinition::class;
-            case 'search':
+            case self::ACTION_SEARCH:
                 return SearchConfigDefinition::class;
-            case 'getWorksheets':
+            case self::ACTION_GET_WORKSHEETS:
                 return GetWorksheetsConfigDefinition::class;
             default:
                 throw new UnexpectedValueException(sprintf('Unexpected action "%s"', $action));
