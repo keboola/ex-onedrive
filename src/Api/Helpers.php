@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
+use Keboola\OneDriveExtractor\Exception\BadRequestException;
 use Normalizer;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
@@ -75,6 +76,9 @@ class Helpers
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
         } elseif ($error && strpos($error, 'ItemNotFound:') === 0) {
             return new ResourceNotFoundException('The resource could not be found.', 0, $e);
+        } elseif ($error && strpos($error, 'BadRequest: ') === 0) {
+            // eg. BadRequest: Tenant does not have a SPO license.
+            return new BadRequestException($error, 0, $e);
         }
 
         return $e;

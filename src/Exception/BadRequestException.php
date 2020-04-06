@@ -6,7 +6,7 @@ namespace Keboola\OneDriveExtractor\Exception;
 
 use Keboola\CommonExceptions\UserExceptionInterface;
 
-class InvalidAuthDataException extends \Exception implements UserExceptionInterface
+class BadRequestException extends \Exception implements UserExceptionInterface
 {
 
 }
