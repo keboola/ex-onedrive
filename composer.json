@@ -1,5 +1,5 @@
 {
-    "name": "keboola/onedrive-extractor",
+    "name": "keboola/ex-onedrive",
     "type": "project",
     "license": "MIT",
     "keywords": [

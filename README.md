@@ -1,6 +1,6 @@
 # Keboola OneDrive Extractor
 
-[![Build Status](https://travis-ci.com/keboola/ex-onedrive-v2.svg?branch=master)](https://travis-ci.com/keboola/ex-onedrive-v2)
+[![Build Status](https://travis-ci.com/keboola/ex-onedrive.svg?branch=master)](https://travis-ci.com/keboola/ex-onedrive)
 
 Extracts spreadsheets from OneDrive
 
@@ -230,8 +230,8 @@ OAUTH_APP_SECRET=...
 Clone this repository and init the workspace with following command:
 
 ```sh
-git clone https://github.com/keboola/ex-onedrive-v2
-cd ex-onedrive-v2
+git clone https://github.com/keboola/ex-onedrive
+cd ex-onedrive
 docker-compose build
 docker-compose run --rm dev composer install --no-scripts
 ```
