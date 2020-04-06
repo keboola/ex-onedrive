@@ -9,13 +9,11 @@
     }
   },
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "search": "drive://${FIXTURES_CATALOG::getMeDriveId}/${FIXTURES_CATALOG::SHAREPOINT_DRIVE::FILE_ONE_SHEET::getPath}"
     },
     "worksheet": {
+      "name":  "sheet-table",
       "position": 0
     }
   }

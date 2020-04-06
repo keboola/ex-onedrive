@@ -70,9 +70,9 @@ class Config extends BaseConfig
         return $this->getValue(['parameters', 'worksheet', 'position']);
     }
 
-    public function getOutputTable(): string
+    public function getWorksheetName(): string
     {
-        return $this->getValue(['parameters', 'output', 'table']);
+        return $this->getValue(['parameters', 'worksheet', 'name']);
     }
 
     public function getOAuthApiData(): array

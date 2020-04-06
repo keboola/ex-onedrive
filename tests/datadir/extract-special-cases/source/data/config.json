@@ -9,14 +9,12 @@
     }
   },
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "driveId": "${FIXTURES_CATALOG::DRIVE::FILE_SPECIAL_CASES::getDriveId}",
       "fileId": "${FIXTURES_CATALOG::DRIVE::FILE_SPECIAL_CASES::getFileId}"
     },
     "worksheet": {
+      "name":  "sheet-table",
       "position": 0
     }
   }

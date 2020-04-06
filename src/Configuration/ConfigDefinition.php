@@ -22,13 +22,6 @@ class ConfigDefinition extends BaseConfigDefinition
         // @formatter:off
         $parametersNode
             ->children()
-                ->arrayNode('output')
-                    ->isRequired()
-                    ->children()
-                        // Output table is required, XLSX file name cannot always be used
-                        ->scalarNode('table')->isRequired()->cannotBeEmpty()->end()
-                    ->end()
-                ->end()
                 // Workbook is one XLSX file
                 ->append(WorkbookDefinition::getDefinition())
                 // In one workbook are multiple worksheets, specify one

@@ -21,6 +21,8 @@ class WorksheetDefinition
         $root
             ->isRequired()
             ->children()
+                // Name of the output CSV file (the file/sheet name can be quite exotic and we cannot rely on it)
+                ->scalarNode('name')->isRequired()->cannotBeEmpty()->end()
                 // Worksheet is specified by id
                 ->scalarNode('id')->cannotBeEmpty()->end()
                 // ... OR by position, first is 0, hidden sheets are included

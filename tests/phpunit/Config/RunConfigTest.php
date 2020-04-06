@@ -36,13 +36,11 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'search' => '/path/to/file',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
@@ -52,14 +50,12 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'driveId' => '1234abc',
                             'fileId' => '5678def',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
@@ -69,14 +65,12 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'driveId' => '1234abc',
                             'fileId' => '5678def',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'id' => '9012xyz',
                         ],
                     ],
@@ -86,14 +80,12 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'driveId' => '1234abc',
                             'fileId' => '5678def',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'id' => '9012xyz',
                         ],
                     ],
@@ -115,20 +107,18 @@ class RunConfigTest extends BaseConfigTest
                 'please set "authorization.oauth_api.credentials.{appKey,#appSecret,#data}".',
                 [
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'search' => '/path/to/file',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
                 ],
             ],
-            'missing-output' => [
-                'The child node "output" at path "root.parameters" must be configured.',
+            'missing-worksheet-name' => [
+                'The child node "name" at path "root.parameters.worksheet" must be configured.',
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
@@ -146,10 +136,8 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
@@ -160,9 +148,6 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'search' => '/path/to/file',
                         ],
@@ -174,13 +159,11 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'driveId' => '1234abc',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
@@ -191,13 +174,11 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'fileId' => '1234abc',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
@@ -209,15 +190,13 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'search' => '/path/to/file',
                             'driveId' => '1234abc',
                             'fileId' => '4567def',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'position' => 0,
                         ],
                     ],
@@ -228,14 +207,12 @@ class RunConfigTest extends BaseConfigTest
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
-                        'output' => [
-                            'table' => 'sheet-table',
-                        ],
                         'workbook' => [
                             'driveId' => '1234abc',
                             'fileId' => '4567def',
                         ],
                         'worksheet' => [
+                            'name' => 'sheet-table',
                             'id' => '901xyz',
                             'position' => 0,
                         ],

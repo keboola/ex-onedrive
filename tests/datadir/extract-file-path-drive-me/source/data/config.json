@@ -9,13 +9,11 @@
     }
   },
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "search": "${FIXTURES_CATALOG::DRIVE::FILE_ONE_SHEET::getPath}"
     },
     "worksheet": {
+      "name":  "sheet-table",
       "position": 0
     }
   }

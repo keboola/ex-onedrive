@@ -8,14 +8,13 @@ Extracts spreadsheets from OneDrive
 
 The configuration `config.json` contains following properties in `parameters` key: 
 
-- `output` - object (required):
-    - `table` - string (required): Target table
 - `workbook` - object (required): Workbook `XLSX` file
    - One of [`driveId` and `fileId`] or `search` must be configured.
     - `driveId` - string: id of [drive resource](https://docs.microsoft.com/en-us/graph/api/resources/drive?view=graph-rest-1.0)    
     - `fileId` - string: id of [driveItem resource](https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0)
     - `search` - string: in same format as in [Search Action](#search-action) 
 - `worksheet` - object (required): Worksheet, one sheet from workbook's sheets
+    - `name` - string (required): Name of the output CSV file
     - One of `id` or `position` must be configured.
     - `id` - string: id of [worksheet resource](https://docs.microsoft.com/en-us/graph/api/resources/worksheet?view=graph-rest-1.0)
     - `position` - int: worksheet position, first is 0, hidden sheets are included
@@ -27,14 +26,12 @@ Input sheet configured by IDs.
 {
   "authorization": {"oauth_api":  "..."},
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "driveId": "...",
       "fileId": "..."
     },
     "worksheet": {
+      "name": "sheet-export",
       "id": "..."
     }
   }
@@ -48,13 +45,11 @@ Otherwise, an error is returned.
 {
   "authorization": {"oauth_api":  "..."},
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "search": "https://.../sharing/link/..."
     },
     "worksheet": {
+      "name": "sheet-export",
       "position": 0
     }
   }
