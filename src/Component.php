@@ -103,7 +103,7 @@ class Component extends BaseComponent
             $this->getManifestManager(),
             $this->api,
             $this->getDataDir(),
-            $config->getOutputTable(),
+            $config->getWorksheetName(),
         );
     }
 }

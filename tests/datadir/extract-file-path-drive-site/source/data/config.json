@@ -9,13 +9,11 @@
     }
   },
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "search": "site://${FIXTURES_CATALOG::getSharePointSiteName}/${FIXTURES_CATALOG::SHAREPOINT_DRIVE::FILE_ONE_SHEET::getPath}"
     },
     "worksheet": {
+      "name":  "sheet-table",
       "position": 0
     }
   }

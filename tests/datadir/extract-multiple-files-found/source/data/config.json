@@ -9,13 +9,11 @@
     }
   },
   "parameters": {
-    "output": {
-      "table": "sheet-table"
-    },
     "workbook": {
       "search": ".xlsx"
     },
     "worksheet": {
+      "name":  "sheet-table",
       "position": 0
     }
   }
