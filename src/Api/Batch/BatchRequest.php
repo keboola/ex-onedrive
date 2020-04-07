@@ -111,7 +111,7 @@ class BatchRequest
                 $request->getUri(),
                 $body['error']['code'] ?? '',
                 $body['error']['message'] ?? '',
-            ));
+            ), $status);
         }
 
         // Map response body (eg. to files)

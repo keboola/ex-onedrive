@@ -7,6 +7,7 @@ namespace Keboola\OneDriveExtractor\Api;
 use Iterator;
 use ArrayIterator;
 use GuzzleHttp\Exception\RequestException;
+use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
 use Retry\BackOff\ExponentialBackOffPolicy;
@@ -27,7 +28,7 @@ use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
 
 class Api
 {
-    private const RETRY_HTTP_CODES = [504]; // retry only on Gateway Timeout
+    private const RETRY_HTTP_CODES = [502, 504]; // retry only on Bad Gateway and Gateway Timeout
 
     private Graph $graphApi;
 
@@ -250,10 +251,14 @@ class Api
     {
         $backOffPolicy = new ExponentialBackOffPolicy(100, 2.0, 2000);
         $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
-            if ($e instanceof RequestException) {
-                $response = $e->getResponse();
+            if ($e instanceof RequestException || $e instanceof BatchRequestException) {
                 // Retry only on defined HTTP codes
-                if ($response && in_array($response->getStatusCode(), self::RETRY_HTTP_CODES, true)) {
+                if (in_array($e->getCode(), self::RETRY_HTTP_CODES, true)) {
+                    return true;
+                }
+
+                // Retry if communication problems
+                if (strpos($e->getMessage(), 'There were communication or server problems')) {
                     return true;
                 }
             }
@@ -266,6 +271,7 @@ class Api
             return $this->execute($method, $uri, $params, $body);
         });
     }
+
 
     private function execute(string $method, string $uri, array $params = [], array $body = []): GraphResponse
     {
