@@ -20,7 +20,7 @@ class Drive
 
     public function __construct(string $id, array $path)
     {
-        if (strlen($id) === 0) {
+        if ($id === '') {
             throw new InvalidArgumentException('Drive id cannot be empty.');
         }
         $this->id = $id;
