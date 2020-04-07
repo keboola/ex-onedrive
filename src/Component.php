@@ -16,10 +16,9 @@ use Keboola\OneDriveExtractor\Configuration\ConfigDefinition;
 
 class Component extends BaseComponent
 {
-    public const
-        ACTION_RUN = 'run',
-        ACTION_SEARCH = 'search',
-        ACTION_GET_WORKSHEETS = 'getWorksheets';
+    public const ACTION_RUN = 'run';
+    public const ACTION_SEARCH = 'search';
+    public const ACTION_GET_WORKSHEETS = 'getWorksheets';
 
     private Api $api;
 
