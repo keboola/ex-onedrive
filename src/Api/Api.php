@@ -94,7 +94,12 @@ class Api
         $header = TableHeader::from($body['address'], $body['text'][0]);
 
         // Log
-        $this->logger->info(sprintf('Loaded sheet header: %s', Helpers::formatIterable($header->getColumns())));
+        $this->logger->info(sprintf(
+            'Found sheet, used range: "%s:%s", header: %s',
+            $header->getStartCell(),
+            $header->getEndCell(),
+            Helpers::formatIterable($header->getColumns()),
+        ));
 
         return $header;
     }

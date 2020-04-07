@@ -4,37 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Model;
 
-use InvalidArgumentException;
 use Keboola\OneDriveExtractor\Api\Helpers;
 
-class TableHeader implements \JsonSerializable
+class TableHeader extends TableRow implements \JsonSerializable
 {
-    private string $start;
-
-    private string $end;
-
     private array $columns;
 
-    public static function from(string $address, array $cells): self
+    public static function from(string $address, ?array $cells = null): self
     {
-        [$start, $end] = self::parseStartEnd($address);
+        [$start, $end, $firstRowNumber, $lastRowNumber] = self::parseStartEnd($address);
         // For empty sheet (start = end) API returns first cell, ignore it
-        $columns = self::parseColumns($start === $end ? [] : $cells);
-        return new self($start, $end, $columns);
-    }
-
-    public static function parseStartEnd(string $address): array
-    {
-        // Eg. address = Sheet1!B1:I123 => start=B, end=I
-        // ... or eg. A1 if empty file
-        preg_match('~!?([A-Z]+)(?:[0-9]+)?(?::([A-Z]+)(?:[0-9]+)?)?$~', $address, $m);
-        if (empty($m)) {
-            throw new InvalidArgumentException(sprintf('Unexpected input: "%s"', $address));
-        }
-
-        $start = $m[1];
-        $end = $m[2] ?? $start;
-        return [$start, $end];
+        $columns = self::parseColumns(!$cells || $start === $end ? [] : $cells);
+        return new self($start, $end, $firstRowNumber, $lastRowNumber, $columns);
     }
 
     public static function parseColumns(array $columns): array
@@ -58,21 +39,10 @@ class TableHeader implements \JsonSerializable
         return $output;
     }
 
-    public function __construct(string $start, string $end, array $columns)
+    public function __construct(string $start, string $end, int $firstRowNumber, int $lastRowNumber, array $columns)
     {
-        $this->start = $start;
-        $this->end = $end;
+        parent::__construct($start, $end, $firstRowNumber, $lastRowNumber);
         $this->columns = $columns;
-    }
-
-    public function getStart(): string
-    {
-        return $this->start;
-    }
-
-    public function getEnd(): string
-    {
-        return $this->end;
     }
 
     public function getColumns(): array
