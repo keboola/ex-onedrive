@@ -8,7 +8,6 @@ use Iterator;
 use Throwable;
 use RuntimeException;
 use GuzzleHttp\Exception\ClientException;
-use Microsoft\Graph\Http\GraphResponse;
 use Microsoft\Graph\Model;
 use Symfony\Component\Finder\Finder;
 
