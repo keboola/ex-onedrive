@@ -52,14 +52,14 @@ class FixturesCatalog
         $utils = new FixturesUtils();
 
         // Info
-        $utils->log('');
-        $utils->log('Uploading fixtures to OneDrive');
-        $utils->log('PLEASE CLOSE ALL OPENED FILES ON OneDrive!!!');
+        FixturesUtils::log('');
+        FixturesUtils::log('Uploading fixtures to OneDrive');
+        FixturesUtils::log('PLEASE CLOSE ALL OPENED FILES ON OneDrive!!!');
 
         // Me drive
         $meDriveId = $utils->getMeDriveId();
-        $utils->log('');
-        $utils->log('Uploading fixtures to me Drive:');
+        FixturesUtils::log('');
+        FixturesUtils::log('Uploading fixtures to me Drive:');
         $meDriveFiles = iterator_to_array($utils->uploadRecursive($meDriveId, __DIR__ . '/data'));
         $meDrive = new Drive($meDriveId, $meDriveFiles);
 
@@ -67,17 +67,17 @@ class FixturesCatalog
         /** @var string|null $sharePointSiteName */
         $sharePointSiteName = getenv('TEST_SHAREPOINT_SITE') ?: null;
         if ($sharePointSiteName) {
-            $utils->log('');
-            $utils->log('Env variable TEST_SHAREPOINT_SITE is set.');
-            $utils->log("Loading drive id for SharePoint site: \"{$sharePointSiteName}\"");
-            $utils->log('Uploading fixtures to SharePoint drive:');
+            FixturesUtils::log('');
+            FixturesUtils::log('Env variable TEST_SHAREPOINT_SITE is set.');
+            FixturesUtils::log("Loading drive id for SharePoint site: \"{$sharePointSiteName}\"");
+            FixturesUtils::log('Uploading fixtures to SharePoint drive:');
             $sharePointDriveId = $utils->getSharePointSiteDriveId($sharePointSiteName);
             $sharePointDriveFiles = iterator_to_array($utils->uploadRecursive($sharePointDriveId, __DIR__ . '/data'));
             $sharePointDrive = new Drive($sharePointDriveId, $sharePointDriveFiles);
         } else {
-            $utils->log('');
-            $utils->log('Env variable TEST_SHAREPOINT_SITE is not set.');
-            $utils->log('SKIPPED upload of fixtures to SharePoint drive.');
+            FixturesUtils::log('');
+            FixturesUtils::log('Env variable TEST_SHAREPOINT_SITE is not set.');
+            FixturesUtils::log('SKIPPED upload of fixtures to SharePoint drive.');
             $sharePointSiteName = null;
             $sharePointDrive = null;
         }

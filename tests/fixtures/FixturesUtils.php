@@ -5,30 +5,32 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\Fixtures;
 
 use Iterator;
-use Keboola\OneDriveExtractor\Api\Helpers;
 use Throwable;
 use RuntimeException;
 use GuzzleHttp\Exception\ClientException;
-use Keboola\OneDriveExtractor\Api\GraphApiFactory;
-use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
 use Microsoft\Graph\Model;
 use Symfony\Component\Finder\Finder;
 
 class FixturesUtils
 {
-    private Graph $graphApi;
+    private static bool $logEnabled = true;
+
+    private FixturesApi $api;
+
+    public static function disableLog(): void
+    {
+        self::$logEnabled = false;
+    }
 
     public function __construct()
     {
-        $this->graphApi = $this->createGraphApi();
+        $this->api = new FixturesApi();
     }
 
     public function getMeDriveId(): string
     {
-        $response = $this->graphApi->createRequest('get', '/me/drive?$select=id')->execute();
-        assert($response instanceof GraphResponse);
-        $body = $response->getBody();
+        $body = $this->api->get('/me/drive?$select=id')->getBody();
         return $body['id'];
     }
 
@@ -36,12 +38,7 @@ class FixturesUtils
     {
         // Load site
         $siteName = urlencode($siteName);
-        $response = $this
-            ->graphApi
-            ->createRequest('get', "/sites?search=$siteName&\$select=id,name")
-            ->execute();
-        assert($response instanceof GraphResponse);
-        $body = $response->getBody();
+        $body = $this->api->get('/sites?search={siteName}&$select=id,name', ['siteName' => $siteName])->getBody();
         $sites = $body['value'];
         if (count($body['value']) === 0) {
             throw new RuntimeException(sprintf(
@@ -58,12 +55,7 @@ class FixturesUtils
 
         // Load drive id
         $siteId = urlencode($body['value'][0]['id']);
-        $response = $this
-            ->graphApi
-            ->createRequest('get', "/sites/{$siteId}/drive?\$select=id")
-            ->execute();
-        assert($response instanceof GraphResponse);
-        $body = $response->getBody();
+        $body = $this->api->get('/sites/{siteId}/drive?$select=id', ['siteId' => $siteId])->getBody();
         return $body['id'];
     }
 
@@ -87,8 +79,8 @@ class FixturesUtils
                     // Delete file, can be partially uploaded
                     if ($retry === 3) {
                         try {
-                            $url = $this->pathToUrl($driveId, $relativePath . '/' . $name);
-                            $this->graphApi->createRequest('DELETE', $url)->execute();
+                            $url = $this->api->pathToUrl($driveId, $relativePath . '/' . $name);
+                            $this->api->delete($url);
                         } catch (ClientException $e) {
                             // ignore if file not exits
                         }
@@ -109,11 +101,13 @@ class FixturesUtils
         $uploadFragSize = 320 * 1024 * 10; // 3.2 MiB
         $fileSize = filesize($localPath);
         $path = $relativePath . '/' . $name;
-        $url = $this->pathToUrl($driveId, $relativePath . '/' . $name);
+        $url = $this->api->pathToUrl($driveId, $relativePath . '/' . $name);
 
         // Create upload session
         /** @var Model\UploadSession $uploadSession */
-        $uploadSession = $this->graphApi
+        $uploadSession = $this
+            ->api
+            ->getGraph()
             ->createRequest('POST', $url . 'createUploadSession')
             ->attachBody(['@microsoft.graph.conflictBehavior'=> 'replace' ])
             ->setReturnType(Model\UploadSession::class)
@@ -131,7 +125,9 @@ class FixturesUtils
                 $start = ftell($file);
                 $data = fread($file, $uploadFragSize);
                 $end = ftell($file);
-                $uploadSession = $this->graphApi
+                $uploadSession = $this
+                    ->api
+                    ->getGraph()
                     ->createRequest('PUT', $uploadSession->getUploadUrl())
                     ->addHeaders([
                         'Content-Length' => $end - $start,
@@ -151,15 +147,9 @@ class FixturesUtils
         FixturesUtils::log(sprintf('"%s" - uploaded', $path));
 
         // Create sharing link (for search by url tests)
-        /** @var GraphResponse $linkResponse */
-        $linkResponse = $this->graphApi
-            ->createRequest('POST', $url . 'createLink')
-            ->attachBody([
-                'type' => 'view',
-                'scope' => 'organization',
-            ])
-            ->execute();
-        $linkBody = $linkResponse->getBody();
+        $linkBody = $this->api
+            ->post($url . 'createLink', [], ['type' => 'view', 'scope' => 'organization'])
+            ->getBody();
         $sharingLink = $linkBody['link']['webUrl'];
         FixturesUtils::log(sprintf('"%s" - created sharing link', $path));
 
@@ -171,43 +161,24 @@ class FixturesUtils
     private function loadWorksheets(string $path, string $driveId, string $fileId): Iterator
     {
         if (preg_match('~\.xlsx$~', $path)) {
-            $worksheetsResponse = $this->graphApi
-                ->createRequest(
-                    'get',
-                    "/drives/{$driveId}/items/{$fileId}/workbook/worksheets?\$select=id,position"
+            $body = $this
+                ->api
+                ->get(
+                    '/drives/{driveId}/items/{fileId}/workbook/worksheets?$select=id,position',
+                    ['driveId' => $driveId, 'fileId' => $fileId]
                 )
-                ->execute();
-            assert($worksheetsResponse instanceof GraphResponse);
-            foreach ($worksheetsResponse->getBody()['value'] as $item) {
+                ->getBody();
+            foreach ($body['value'] as $item) {
                 yield $item['position'] => $item['id'];
             }
             FixturesUtils::log(sprintf('"%s" - loaded worksheet ids', $path));
         }
     }
 
-    private function pathToUrl(string $driveId, string $path): string
+    public static function log(string $text): void
     {
-        $driveId = urlencode($driveId);
-        $path = Helpers::convertPathToApiFormat($path);
-        return "/drives/{$driveId}/root{$path}";
-    }
-
-    private function createGraphApi(): Graph
-    {
-        $apiFactory = new GraphApiFactory();
-        return $apiFactory->create(
-            (string) getenv('OAUTH_APP_ID'),
-            (string) getenv('OAUTH_APP_SECRET'),
-            [
-                'access_token' => getenv('OAUTH_ACCESS_TOKEN'),
-                'refresh_token' => getenv('OAUTH_REFRESH_TOKEN'),
-            ]
-        );
-    }
-
-    public function log(string $text): void
-    {
-
-        echo empty($text) ? "\n" : "FixturesUtils: {$text}\n";
+        if (self::$logEnabled) {
+            echo empty($text) ? "\n" : "FixturesUtils: {$text}\n";
+        }
     }
 }
