@@ -16,9 +16,9 @@ class TableHeaderTest extends TestCase
         Assert::assertSame('B', $row->getStart());
         Assert::assertSame('B123', $row->getStartCell());
         Assert::assertSame('I', $row->getEnd());
-        Assert::assertSame('I456', $row->getEndCell());
+        Assert::assertSame('I123', $row->getEndCell());
         Assert::assertSame(123, $row->getFirstRowNumber());
-        Assert::assertSame(456, $row->getLastRowNumber());
+        Assert::assertSame(123, $row->getLastRowNumber());
         Assert::assertSame(['a', 'b', 'b-1', 'c'], $row->getColumns());
     }
 

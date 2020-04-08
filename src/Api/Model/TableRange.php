@@ -6,7 +6,7 @@ namespace Keboola\OneDriveExtractor\Api\Model;
 
 use InvalidArgumentException;
 
-class TableRow
+class TableRange
 {
     private string $start;
 
@@ -65,6 +65,11 @@ class TableRow
     public function getEndCell(): string
     {
         return $this->end . $this->lastRowNumber;
+    }
+
+    public function getAddress(): string
+    {
+        return $this->getStartCell() . ':' . $this->getEndCell();
     }
 
     public function getFirstRowNumber(): int

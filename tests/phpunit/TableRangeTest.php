@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\Tests;
 
 use InvalidArgumentException;
-use Keboola\OneDriveExtractor\Api\Model\TableRow;
+use Keboola\OneDriveExtractor\Api\Model\TableRange;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
-class TableRowTest extends TestCase
+class TableRangeTest extends TestCase
 {
     public function testGetters(): void
     {
-        $row = TableRow::from('Sheet1!B123:I456');
-        Assert::assertSame('B', $row->getStart());
-        Assert::assertSame('B123', $row->getStartCell());
-        Assert::assertSame('I', $row->getEnd());
-        Assert::assertSame('I456', $row->getEndCell());
-        Assert::assertSame(123, $row->getFirstRowNumber());
-        Assert::assertSame(456, $row->getLastRowNumber());
+        $range = TableRange::from('Sheet1!B123:I456');
+        Assert::assertSame('B', $range->getStart());
+        Assert::assertSame('B123', $range->getStartCell());
+        Assert::assertSame('I', $range->getEnd());
+        Assert::assertSame('I456', $range->getEndCell());
+        Assert::assertSame(123, $range->getFirstRowNumber());
+        Assert::assertSame(456, $range->getLastRowNumber());
     }
 
     /**
@@ -27,7 +27,7 @@ class TableRowTest extends TestCase
      */
     public function testParseStartEndSuccess(string $input, array $expected): void
     {
-        Assert::assertSame($expected, TableRow::parseStartEnd($input));
+        Assert::assertSame($expected, TableRange::parseStartEnd($input));
     }
 
     /**
@@ -36,7 +36,7 @@ class TableRowTest extends TestCase
     public function testParseStartEndFail(string $input): void
     {
         $this->expectException(InvalidArgumentException::class);
-        TableRow::parseStartEnd($input);
+        TableRange::parseStartEnd($input);
     }
 
     public function getStartsEndsValid(): array

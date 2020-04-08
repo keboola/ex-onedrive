@@ -13,11 +13,16 @@ class GetContentTest extends BaseTest
     /**
      * @dataProvider getFiles
      */
-    public function testGetWorksheetHeader(string $fileName, int $worksheetPosition, array $expectedHeader): void
-    {
+    public function testGetWorksheetHeader(
+        string $fileName,
+        int $worksheetPosition,
+        string $expectedHeaderAddress,
+        array $expectedHeader
+    ): void {
         $fixture = $this->fixtures->getDrive()->getFile($fileName);
         $worksheetId = $this->api->getWorksheetId($fixture->getDriveId(), $fixture->getFileId(), $worksheetPosition);
         $header = $this->api->getWorksheetHeader($fixture->getDriveId(), $fixture->getFileId(), $worksheetId);
+        Assert::assertSame($expectedHeaderAddress, $header->getAddress());
         Assert::assertSame($expectedHeader, json_decode((string) json_encode($header)));
     }
 
@@ -35,13 +40,17 @@ class GetContentTest extends BaseTest
     public function testGetWorksheetContent(
         string $fileName,
         int $worksheetPosition,
+        string $expectedHeaderAddress,
         array $expectedHeader,
+        string $expectedTableAddress,
         array $expectedContent
     ): void {
         $fixture = $this->fixtures->getDrive()->getFile($fileName);
         $worksheetId = $this->api->getWorksheetId($fixture->getDriveId(), $fixture->getFileId(), $worksheetPosition);
         $table = $this->api->getWorksheetContent($fixture->getDriveId(), $fixture->getFileId(), $worksheetId);
+        Assert::assertSame($expectedHeaderAddress, $table->getHeader()->getAddress());
         Assert::assertSame($expectedHeader, json_decode((string) json_encode($table->getHeader())));
+        Assert::assertSame($expectedTableAddress, $table->getAddress());
         Assert::assertSame($expectedContent, iterator_to_array($table->getRows()));
     }
 
@@ -61,7 +70,9 @@ class GetContentTest extends BaseTest
             'hidden-sheet' => [
                 FixturesCatalog::FILE_HIDDEN_SHEET,
                 2, // hidden sheet, see ListSheetsTest.php
+                'A48:C48',
                 ['Col_4', 'Col_5', 'Col_6'],
+                'A48:C50',
                 [
                     ['A', 'B', 'cell from hidden sheet'],
                     ['X', 'Y', 'Z'],
@@ -70,7 +81,9 @@ class GetContentTest extends BaseTest
             'one-sheet' => [
                 FixturesCatalog::FILE_ONE_SHEET,
                 0,
+                'A1:C1',
                 ['Col_1', 'Col_2', 'Col_3'],
+                'A1:C3',
                 [
                     ['A', 'B', 'C'],
                     ['D', 'E', 'F'],
@@ -79,12 +92,15 @@ class GetContentTest extends BaseTest
             'only-header' => [
                 FixturesCatalog::FILE_ONLY_HEADER,
                 0,
+                'A1:D1',
                 ['Col1', 'Col2', 'Col3', 'Col4'],
+                'A1:D1',
                 [],
             ],
             'special-cases' => [
                 FixturesCatalog::FILE_SPECIAL_CASES,
                 0,
+                'C4:I4',
                 [
                     'Duplicate',
                     'Duplicate-1',
@@ -94,6 +110,7 @@ class GetContentTest extends BaseTest
                     'column-6',
                     'column-7',
                 ],
+                'C4:I14',
                 [
                     ['A', '10', '(2x empty header)', '', ' $1,618.50 ', '1/1/2014', '(empty col)',],
                     ['B', '20', 'a', '', ' $1,321.00 ', '1/1/2014', '',],
@@ -110,6 +127,7 @@ class GetContentTest extends BaseTest
             'table-offset' => [
                 FixturesCatalog::FILE_TABLE_OFFSET,
                 0,
+                'C9:L9',
                 [
                     'Segment',
                     'column-2',
@@ -122,6 +140,7 @@ class GetContentTest extends BaseTest
                     'column-9',
                     'column-10',
                 ],
+                'C9:L14',
                 [
                     ['Government', '', 'Canada', '', '6', 'Carretera', 'None', '1618.5', '', '',],
                     ['Government', '', 'Germany', '', '7', 'Carretera', 'None', '1321', '', '',],

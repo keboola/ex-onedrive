@@ -6,16 +6,19 @@ namespace Keboola\OneDriveExtractor\Api\Model;
 
 use Keboola\OneDriveExtractor\Api\Helpers;
 
-class TableHeader extends TableRow implements \JsonSerializable
+class TableHeader extends TableRange implements \JsonSerializable
 {
     private array $columns;
 
     public static function from(string $address, ?array $cells = null): self
     {
-        [$start, $end, $firstRowNumber, $lastRowNumber] = self::parseStartEnd($address);
+        [$start, $end, $firstRowNumber] = self::parseStartEnd($address);
+
         // For empty sheet (start = end) API returns first cell, ignore it
         $columns = self::parseColumns(!$cells || $start === $end ? [] : $cells);
-        return new self($start, $end, $firstRowNumber, $lastRowNumber, $columns);
+
+        // Intentionally 2x firstRowNumber, because header range, not whole table
+        return new self($start, $end, $firstRowNumber, $firstRowNumber, $columns);
     }
 
     public static function parseColumns(array $columns): array

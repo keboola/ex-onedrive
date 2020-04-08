@@ -80,7 +80,7 @@ class Api
         ));
 
         // Encapsulate
-        return SheetContent::from($header, $iterator);
+        return SheetContent::from($header, $address, $iterator);
     }
 
     public function getWorksheetHeader(string $driveId, string $fileId, string $worksheetId): TableHeader
@@ -96,7 +96,7 @@ class Api
 
         // Log
         $this->logger->info(sprintf(
-            'Found sheet, used range: "%s:%s", header: %s',
+            'Found sheet, header (%s:%s): %s',
             $header->getStartCell(),
             $header->getEndCell(),
             Helpers::formatIterable($header->getColumns()),
