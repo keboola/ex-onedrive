@@ -1,0 +1,20 @@
+{
+  "authorization": {
+    "oauth_api": {
+      "credentials": {
+        "#data": "${OAUTH_DATA}",
+        "#appSecret": "${OAUTH_APP_SECRET}",
+        "appKey": "${OAUTH_APP_ID}"
+      }
+    }
+  },
+  "parameters": {
+    "workbook": {
+      "search": "site://${FIXTURES_CATALOG::getSharePointSiteName}/${FIXTURES_CATALOG::SHAREPOINT_DRIVE::FILE_ONE_SHEET::getPath}"
+    },
+    "worksheet": {
+      "name":  "sheet-table",
+      "position": 0
+    }
+  }
+}

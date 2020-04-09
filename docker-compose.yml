@@ -1,7 +1,14 @@
-version: '2'
+version: '3'
 services:
   dev:
     build: .
     volumes:
       - ./:/code
-      - ./data:/data
+    environment:
+     - OAUTH_APP_NAME
+     - OAUTH_APP_ID
+     - OAUTH_APP_SECRET
+     - OAUTH_ACCESS_TOKEN
+     - OAUTH_REFRESH_TOKEN
+     - TEST_SHAREPOINT_SITE
+

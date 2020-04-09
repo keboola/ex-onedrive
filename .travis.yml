@@ -6,10 +6,18 @@ services:
   - docker
 
 before_script:
-  - export APP_IMAGE=keboola-component
+  - export APP_IMAGE=keboola-ex-onedrive
   - docker -v
   - docker build -t $APP_IMAGE .
-  - docker run $APP_IMAGE composer ci
+  - docker run
+    -e OAUTH_APP_NAME
+    -e OAUTH_APP_ID
+    -e OAUTH_APP_SECRET
+    -e OAUTH_ACCESS_TOKEN
+    -e OAUTH_REFRESH_TOKEN
+    -e TEST_SHAREPOINT_SITE
+    $APP_IMAGE
+    composer ci
 
   # push test image to ECR
   - docker pull quay.io/keboola/developer-portal-cli-v2:latest

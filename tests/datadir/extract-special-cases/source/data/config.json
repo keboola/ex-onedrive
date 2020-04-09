@@ -1,0 +1,21 @@
+{
+  "authorization": {
+    "oauth_api": {
+      "credentials": {
+        "#data": "${OAUTH_DATA}",
+        "#appSecret": "${OAUTH_APP_SECRET}",
+        "appKey": "${OAUTH_APP_ID}"
+      }
+    }
+  },
+  "parameters": {
+    "workbook": {
+      "driveId": "${FIXTURES_CATALOG::DRIVE::FILE_SPECIAL_CASES::getDriveId}",
+      "fileId": "${FIXTURES_CATALOG::DRIVE::FILE_SPECIAL_CASES::getFileId}"
+    },
+    "worksheet": {
+      "name":  "sheet-table",
+      "position": 0
+    }
+  }
+}

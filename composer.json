@@ -1,33 +1,54 @@
 {
-    "require": {
-        "php": "^7.1",
-        "keboola/php-component": "^7.0.1"
-    },
-    "require-dev": {
-        "jakub-onderka/php-parallel-lint": "^1.0",
-        "keboola/coding-standard": ">=7.0.2",
-        "keboola/php-temp": "^1.0",
-        "phpstan/phpstan-shim": "^0.10.6",
-        "phpunit/phpunit": "^7.0",
-        "symfony/process": "^4.0",
-        "keboola/datadir-tests": "^2.0"
-    },
+    "name": "keboola/ex-onedrive",
+    "type": "project",
+    "license": "MIT",
+    "description": "Extracts spreadsheets from OneDrive",
+    "keywords": [
+        "keboola",
+        "docker",
+        "component",
+        "onedrive"
+    ],
     "autoload": {
         "psr-4": {
-            "MyComponent\\": "src/"
+            "Keboola\\OneDriveExtractor\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "MyComponent\\Tests\\": "tests/phpunit/",
-            "MyComponent\\FunctionalTests\\": "tests/functional/"
+            "Keboola\\OneDriveExtractor\\Fixtures\\": "tests/fixtures/",
+            "Keboola\\OneDriveExtractor\\Tests\\": "tests/phpunit/",
+            "Keboola\\OneDriveExtractor\\ApiTests\\": "tests/api/",
+            "Keboola\\OneDriveExtractor\\DataDirTests\\": "tests/datadir/"
         }
+    },
+    "require": {
+        "php": "^7.4",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "keboola/csv": "^2.1",
+        "keboola/php-component": "^8.1",
+        "keboola/retry": "^0.5.0",
+        "league/oauth2-client": "^2.4",
+        "microsoft/microsoft-graph": "^1.13"
+    },
+    "require-dev": {
+        "jakub-onderka/php-parallel-lint": "^1.0",
+        "keboola/coding-standard": ">=7.0.2",
+        "keboola/datadir-tests": "^4.0",
+        "keboola/php-temp": "^2.0",
+        "phpstan/phpstan": "^0.12.14",
+        "phpunit/phpunit": "^9.0",
+        "symfony/process": "^5.0"
     },
     "scripts": {
         "tests-phpunit": "phpunit",
-        "tests-datadir": "phpunit tests/functional",
+        "tests-api": "phpunit tests/api",
+        "tests-datadir": "phpunit tests/datadir",
         "tests": [
             "@tests-phpunit",
+            "@tests-api",
             "@tests-datadir"
         ],
 
