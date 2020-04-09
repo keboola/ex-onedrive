@@ -215,6 +215,11 @@ class WorkbooksFinder
                     continue;
                 }
 
+                // Skip if missing driveId
+                if (!isset($file['parentReference']['driveId'])) {
+                    continue;
+                }
+
                 yield File::from($file, $path);
             }
         };

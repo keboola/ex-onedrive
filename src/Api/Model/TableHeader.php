@@ -14,8 +14,10 @@ class TableHeader extends TableRange implements \JsonSerializable
     {
         [$start, $end, $firstRowNumber] = self::parseStartEnd($address);
 
-        // For empty sheet (start = end) API returns first cell, ignore it
-        $columns = self::parseColumns(!$cells || $start === $end ? [] : $cells);
+        // For empty sheet API returns empty first cell, ignore it
+        $cells = $cells ?? [];
+        $empty = count($cells) <= 1 && ($cells[0] ?? '') === '';
+        $columns = self::parseColumns($empty ? [] : $cells);
 
         // Intentionally 2x firstRowNumber, because header range, not whole table
         return new self($start, $end, $firstRowNumber, $firstRowNumber, $columns);

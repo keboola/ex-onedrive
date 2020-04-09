@@ -97,6 +97,18 @@ class GetContentTest extends BaseTest
                 'A1:D1',
                 [],
             ],
+            'only-one-column' => [
+                FixturesCatalog::FILE_ONLY_ONE_COLUMN,
+                0,
+                'A1:A1',
+                ['Col1'],
+                'A1:A4',
+                [
+                    ['Row1'],
+                    ['Row2'],
+                    ['Row3'],
+                ],
+            ],
             'special-cases' => [
                 FixturesCatalog::FILE_SPECIAL_CASES,
                 0,
