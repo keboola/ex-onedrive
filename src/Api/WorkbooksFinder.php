@@ -186,11 +186,10 @@ class WorkbooksFinder
 
         // Find files in sites
         foreach ($this->api->getSitesDrives() as $drive) {
-            $driveId = urlencode($drive->getId());
             $uriTemplate = "/drives/{driveId}/search(q='{search}')?\$top={limit}";
             $batch->addRequest(
                 $uriTemplate,
-                array_merge($args, ['driveId' => $driveId]),
+                array_merge($args, ['driveId' => $drive->getId()]),
                 $this->getMapToFileCallback($drive->getPath(), $search)
             );
         }
