@@ -48,12 +48,15 @@ class BatchRequest
 
     public function execute(): Iterator
     {
-        $this->processedCount = 0;
-        $response = $this->runBatchRequest();
-        do {
-            yield from $this->processBatchResponse($response);
-            $response = $this->getNextPage($response);
-        } while ($response !== null);
+        // Empty batch request cannot be executed, ... if empty => empty iterator is returned
+        if ($this->requests) {
+            $this->processedCount = 0;
+            $response = $this->runBatchRequest();
+            do {
+                yield from $this->processBatchResponse($response);
+                $response = $this->getNextPage($response);
+            } while ($response !== null);
+        }
     }
 
     private function getNextPage(GraphResponse $response): ?GraphResponse
