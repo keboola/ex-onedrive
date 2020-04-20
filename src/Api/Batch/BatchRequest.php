@@ -70,21 +70,10 @@ class BatchRequest
 
     private function runBatchRequest(): GraphResponse
     {
-        $retry = 3;
-        while (true) {
-            try {
-                return $this->api->post('/$batch', [], [
-                    'requests' =>
-                        array_map(fn(Request $request) => $request->toArray(), array_values($this->requests)),
-                ]);
-            } catch (RequestException $e) {
-                // Retry only if 504 Gateway Timeout
-                $response = $e->getResponse();
-                if ($retry-- <= 0 || !$response || $response->getStatusCode() !== 504) {
-                    throw $e;
-                }
-            }
-        }
+        return $this->api->post('/$batch', [], [
+            'requests' =>
+                array_map(fn(Request $request) => $request->toArray(), array_values($this->requests)),
+        ]);
     }
 
     private function processBatchResponse(GraphResponse $batchResponse): Iterator
