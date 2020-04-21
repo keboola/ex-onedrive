@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Batch;
 
+use Throwable;
 use Iterator;
 use InvalidArgumentException;
-use GuzzleHttp\Exception\RequestException;
 use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
-use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
 
 /**
@@ -39,10 +38,11 @@ class BatchRequest
         string $uriTemplate,
         array $uriArgs = [],
         ?callable $responseMapper = null,
+        ?callable $exceptionProcessor = null,
         string $method = 'GET'
     ): self {
         $id = (string) $this->idCounter++;
-        $this->requests[$id] = new Request($id, $uriTemplate, $uriArgs, $responseMapper, $method);
+        $this->requests[$id] = new Request($id, $uriTemplate, $uriArgs, $responseMapper, $exceptionProcessor, $method);
         return $this;
     }
 
@@ -89,7 +89,17 @@ class BatchRequest
             $status = (int) $response['status'];
             $body = $response['body'] ?? [];
             $request = $this->getRequestById($id);
-            yield from $this->processResponse($request, $status, $body);
+
+            try {
+                yield from $this->processResponse($request, $status, $body);
+            } catch (Throwable $e) {
+                if ($request->hasExceptionProcessor()) {
+                    $request->getExceptionProcessor()($e);
+                    continue;
+                }
+
+                throw $e;
+            }
         }
     }
 
@@ -103,13 +113,12 @@ class BatchRequest
                 $request->getUri(),
                 $body['error']['code'] ?? '',
                 $body['error']['message'] ?? '',
-            ), $status);
+            ), $body['error']['message'], $status);
         }
 
         // Map response body (eg. to files)
-        $mapper = $request->getResponseMapper();
-        $values = $mapper ? $mapper($body) : [$body];
-        assert($values instanceof Iterator);
+        /** @var iterable $values */
+        $values = $request->hasResponseMapper() ? $request->getResponseMapper()($body) : [$body];
         foreach ($values as $key => $value) {
             // End if over limit (eg. last page has 10 items, but we need only 4)
             if ($this->limit && $this->processedCount >= $this->limit) {

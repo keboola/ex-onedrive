@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
+use Keboola\OneDriveExtractor\Exception\BatchRequestException;
+use Throwable;
 use Iterator;
 use GuzzleHttp\Exception\RequestException;
 use Keboola\OneDriveExtractor\Api\Model\File;
@@ -178,11 +180,21 @@ class WorkbooksFinder
 
         // Find files in personal OneDrive
         $uriTemplate = "/me/drive/root/search(q='{search}')?\$select={select}&\$top={limit}";
-        $batch->addRequest($uriTemplate, $args, $this->getMapToFileCallback(['my'], $search));
+        $batch->addRequest(
+            $uriTemplate,
+            $args,
+            $this->getMapToFileCallback(['my'], $search),
+            $this->getExceptionProcessor('me drive', $search)
+        );
 
         // Add files shared with me
         $uriTemplate = '/me/drive/sharedWithMe?$select={select}&$top={limit}';
-        $batch->addRequest($uriTemplate, $args, $this->getMapToFileCallback(['shared'], $search));
+        $batch->addRequest(
+            $uriTemplate,
+            $args,
+            $this->getMapToFileCallback(['shared'], $search),
+            $this->getExceptionProcessor('shared files', $search)
+        );
 
         // Find files in sites
         foreach ($this->api->getSitesDrives() as $drive) {
@@ -190,7 +202,11 @@ class WorkbooksFinder
             $batch->addRequest(
                 $uriTemplate,
                 array_merge($args, ['driveId' => $drive->getId()]),
-                $this->getMapToFileCallback($drive->getPath(), $search)
+                $this->getMapToFileCallback($drive->getPath(), $search),
+                $this->getExceptionProcessor(
+                    sprintf('SharePoint site "%s"', $drive->getSite()->getName()),
+                    $search
+                )
             );
         }
 
@@ -221,6 +237,24 @@ class WorkbooksFinder
 
                 yield File::from($file, $path);
             }
+        };
+    }
+
+    private function getExceptionProcessor(string $target, string $search): callable
+    {
+        return function (Throwable $e) use ($target, $search): void {
+            if ($e instanceof BatchRequestException) {
+                $this->logger->warning(sprintf(
+                    'Error when searching for "%s" in %s: "%s" (%d).',
+                    $search,
+                    $target,
+                    $e->getOriginalMessage(),
+                    $e->getCode(),
+                ));
+                return;
+            }
+
+            throw $e;
         };
     }
 
