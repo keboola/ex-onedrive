@@ -48,12 +48,15 @@ class BatchRequest
 
     public function execute(): Iterator
     {
-        $this->processedCount = 0;
-        $response = $this->runBatchRequest();
-        do {
-            yield from $this->processBatchResponse($response);
-            $response = $this->getNextPage($response);
-        } while ($response !== null);
+        // Empty batch request cannot be executed, ... if empty => empty iterator is returned
+        if ($this->requests) {
+            $this->processedCount = 0;
+            $response = $this->runBatchRequest();
+            do {
+                yield from $this->processBatchResponse($response);
+                $response = $this->getNextPage($response);
+            } while ($response !== null);
+        }
     }
 
     private function getNextPage(GraphResponse $response): ?GraphResponse
@@ -70,21 +73,10 @@ class BatchRequest
 
     private function runBatchRequest(): GraphResponse
     {
-        $retry = 3;
-        while (true) {
-            try {
-                return $this->api->post('/$batch', [], [
-                    'requests' =>
-                        array_map(fn(Request $request) => $request->toArray(), array_values($this->requests)),
-                ]);
-            } catch (RequestException $e) {
-                // Retry only if 504 Gateway Timeout
-                $response = $e->getResponse();
-                if ($retry-- <= 0 || !$response || $response->getStatusCode() !== 504) {
-                    throw $e;
-                }
-            }
-        }
+        return $this->api->post('/$batch', [], [
+            'requests' =>
+                array_map(fn(Request $request) => $request->toArray(), array_values($this->requests)),
+        ]);
     }
 
     private function processBatchResponse(GraphResponse $batchResponse): Iterator

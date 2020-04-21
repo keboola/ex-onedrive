@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\ApiTests;
 
+use ArrayIterator;
+use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\SkippedTestError;
+use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ShareLinkException;
 use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
-use PHPUnit\Framework\Assert;
-use PHPUnit\Framework\SkippedTestError;
 
 class SearchForFileTest extends BaseTest
 {
@@ -234,5 +237,23 @@ class SearchForFileTest extends BaseTest
             '~The sharing link ".*" no exists, or you do not have permission to access it\.~',
         );
         iterator_to_array($this->api->searchWorkbooks($notExistsUrl));
+    }
+
+    public function testSearchByTextNoSharePointSitePresent(): void
+    {
+        // Test for bug COM-214, when no share point site is present,
+        // ... and search results to "BadRequest: Invalid batch payload format."
+        // In testing account are sharePoint site present, so mock it
+        $mock = $this
+            ->getMockBuilder(Api::class)
+            ->setConstructorArgs([$this->createGraphApi(), $this->logger])
+            ->setMethods(['getSites'])
+            ->getMock();
+        $mock->method('getSites')->willReturn(new ArrayIterator([])); // no site
+
+        /** @var Api $api */
+        $api = $mock;
+        $files = iterator_to_array($api->searchWorkbooks('file_not_found_abc.xlsx'));
+        Assert::assertCount(0, $files);
     }
 }
