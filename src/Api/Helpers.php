@@ -78,7 +78,15 @@ class Helpers
             return new ResourceNotFoundException('The resource could not be found.', 0, $e);
         } elseif ($error && strpos($error, 'BadRequest: ') === 0) {
             // eg. BadRequest: Tenant does not have a SPO license.
-            return new BadRequestException($error, 0, $e);
+            return new BadRequestException($error, $e->getCode(), $e);
+        } elseif ($e->getCode() === 400) {
+            // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.InvalidClientQueryException"
+            return new BadRequestException(
+                'Bad request error. Please check configuration. ' .
+                'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                $e->getCode(),
+                $e
+            );
         }
 
         return $e;
