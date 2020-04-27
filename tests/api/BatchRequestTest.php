@@ -25,11 +25,15 @@ class BatchRequestTest extends BaseTest
         $batch->addRequest('/some/invalid/path2', [], null, function (Throwable $e): void {
             $this->logger->warning('Warning, request 2 failed.');
         });
+
         $results = iterator_to_array($batch->execute());
         Assert::assertCount(0, $results);
+
+        $logs = array_map(fn(array $r) => $r['message'], $this->logger->records);
+        sort($logs); // sort by value, order is not guaranteed by API
         Assert::assertSame([
             'Warning, request 1 failed.',
             'Warning, request 2 failed.',
-        ], array_map(fn(array $r) => $r['message'], $this->logger->records));
+        ], $logs);
     }
 }

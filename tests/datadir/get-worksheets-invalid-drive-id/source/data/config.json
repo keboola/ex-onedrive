@@ -1,0 +1,18 @@
+{
+  "authorization": {
+    "oauth_api": {
+      "credentials": {
+        "#data": "${OAUTH_DATA}",
+        "#appSecret": "${OAUTH_APP_SECRET}",
+        "appKey": "${OAUTH_APP_ID}"
+      }
+    }
+  },
+  "action": "getWorksheets",
+  "parameters": {
+    "workbook": {
+      "driveId": "invalid_drive_id",
+      "fileId": "${FIXTURES_CATALOG::DRIVE::FILE_EMPTY::getFileId}"
+    }
+  }
+}

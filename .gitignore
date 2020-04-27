@@ -1,6 +1,6 @@
 /vendor
 /.idea
 /data
-/tests/functional/Fixtures/.fixturesCatalog
+/tests/fixtures/.fixturesCatalog
 *.env
 
