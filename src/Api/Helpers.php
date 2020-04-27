@@ -76,6 +76,14 @@ class Helpers
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
         } elseif ($error && strpos($error, 'ItemNotFound:') === 0) {
             return new ResourceNotFoundException('The resource could not be found.', 0, $e);
+        } elseif ($e->getCode() === 404) {
+            // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.ResourceNotFoundException"
+            return new BadRequestException(
+                'Not found error. Please check configuration. ' .
+                'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                $e->getCode(),
+                $e
+            );
         } elseif ($error && strpos($error, 'BadRequest: ') === 0) {
             // eg. BadRequest: Tenant does not have a SPO license.
             return new BadRequestException($error, $e->getCode(), $e);
