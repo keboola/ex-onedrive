@@ -26,6 +26,8 @@ class WorkbookDefinition
                 ->scalarNode('fileId')->cannotBeEmpty()->end()
                 // ... OR by search (path, download url, ...)
                 ->scalarNode('search')->cannotBeEmpty()->end()
+                // optional metadata can be always present, it is not used in code
+                ->arrayNode('metadata')->ignoreExtraKeys(true)->end()
             ->end()
             // Not empty
             ->validate()
