@@ -55,6 +55,22 @@ class SearchConfigTest extends BaseConfigTest
                     ],
                 ],
             ],
+            'valid-plus-metadata' => [
+                [
+                    'action' => 'search',
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '...',
+                            'fileId' => '...',
+                            'metadata' => [
+                                'a' => 1,
+                                'b' => 'abc',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 

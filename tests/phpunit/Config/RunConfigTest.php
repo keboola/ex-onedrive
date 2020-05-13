@@ -91,6 +91,29 @@ class RunConfigTest extends BaseConfigTest
                     ],
                 ],
             ],
+            'valid-plus-metadata' => [
+                [
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '5678def',
+                            'metadata' => [
+                                'a' => 1,
+                                'b' => 'abc',
+                            ],
+                        ],
+                        'worksheet' => [
+                            'name' => 'sheet-table',
+                            'id' => '9012xyz',
+                            'metadata' => [
+                                'a' => 1,
+                                'b' => 'abc',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 

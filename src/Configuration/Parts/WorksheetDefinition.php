@@ -27,6 +27,8 @@ class WorksheetDefinition
                 ->scalarNode('id')->cannotBeEmpty()->end()
                 // ... OR by position, first is 0, hidden sheets are included
                 ->scalarNode('position')->cannotBeEmpty()->end()
+                // optional metadata can be always present, it is not used in code
+                ->arrayNode('metadata')->ignoreExtraKeys(true)->end()
             ->end()
             // Only one of id/position allowed
             ->validate()

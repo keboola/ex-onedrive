@@ -13,11 +13,19 @@ The configuration `config.json` contains following properties in `parameters` ke
     - `driveId` - string: id of [drive resource](https://docs.microsoft.com/en-us/graph/api/resources/drive?view=graph-rest-1.0)    
     - `fileId` - string: id of [driveItem resource](https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0)
     - `search` - string: in same format as in [Search Action](#search-action) 
+    - `metadata` - object (optional): 
+       - Serves to store human-readable data when `driveId` / `fileId` are used to define `workbook`.
+       - The component code is not using content of this metadata. 
+       - UI can use it to store and later show metadata from FilePicker.
 - `worksheet` - object (required): Worksheet, one sheet from workbook's sheets
     - `name` - string (required): Name of the output CSV file
     - One of `id` or `position` must be configured.
     - `id` - string: id of [worksheet resource](https://docs.microsoft.com/en-us/graph/api/resources/worksheet?view=graph-rest-1.0)
     - `position` - int: worksheet position, first is 0, hidden sheets are included
+    - `metadata` - object (optional): 
+       - Serves to store human-readable data (eg. sheet name ) when `id` is used to define `worksheet`.
+       - The component code is not using content of this metadata.
+       - UI can use it to store and later show metadata from FilePicker.
 
 **Examples of `config.json`**
 

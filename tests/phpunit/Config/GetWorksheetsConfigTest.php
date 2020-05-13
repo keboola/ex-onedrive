@@ -55,6 +55,22 @@ class GetWorksheetsConfigTest extends BaseConfigTest
                     ],
                 ],
             ],
+            'valid-ids-plus-metadata' => [
+                [
+                    'action' => 'getWorksheets',
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '5678def',
+                            'metadata' => [
+                                'a' => 1,
+                                'b' => 'abc',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 
