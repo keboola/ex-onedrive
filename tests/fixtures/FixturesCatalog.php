@@ -20,6 +20,7 @@ class FixturesCatalog
         FILE_EMPTY = self::BASE_DIR . '/valid/empty.xlsx',
         FILE_HIDDEN_SHEET = self::BASE_DIR . '/valid/hidden_sheet.xlsx',
         FILE_ONE_SHEET = self::BASE_DIR . '/valid/one_sheet.xlsx',
+        FILE_MANY_SHEETS = self::BASE_DIR . '/valid/many_sheets.xlsx',
         FILE_ONLY_HEADER = self::BASE_DIR . '/valid/only_header.xlsx',
         FILE_ONLY_ONE_COLUMN = self::BASE_DIR . '/valid/only_one_column.xlsx',
         FILE_SPECIAL_CASES = self::BASE_DIR . '/valid/special_cases.xlsx',
