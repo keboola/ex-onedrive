@@ -28,8 +28,13 @@ use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
 
 class Api
 {
-    // Retry on Internal Serve Error, Bad Gateway and Gateway Timeout
-    public const RETRY_HTTP_CODES = [500, 502, 504];
+    public const RETRY_HTTP_CODES = [
+        409, // 409 Conflict
+        500, // 500 Internal Serve Error
+        502, // 502 Bad Gateway
+        503, // 503 Service Unavailable
+        504, // 504 Gateway Timeout
+    ];
 
     private Graph $graphApi;
 

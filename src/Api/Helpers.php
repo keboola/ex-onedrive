@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\Api;
 
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
+use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
 use Normalizer;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
@@ -74,11 +75,9 @@ class Helpers
         if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
             $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
-        } elseif ($error && strpos($error, 'ItemNotFound:') === 0) {
-            return new ResourceNotFoundException('The resource could not be found.', 0, $e);
-        } elseif ($e->getCode() === 404) {
+        } elseif ($e->getCode() === 404 || ($error && strpos($error, 'ItemNotFound:') === 0)) {
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.ResourceNotFoundException"
-            return new BadRequestException(
+            return new ResourceNotFoundException(
                 'Not found error. Please check configuration. ' .
                 'It can be caused by typo in an ID, or resource doesn\'t exists.',
                 $e->getCode(),
@@ -92,6 +91,13 @@ class Helpers
             return new BadRequestException(
                 'Bad request error. Please check configuration. ' .
                 'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                $e->getCode(),
+                $e
+            );
+        } elseif ($e->getCode() === 504) {
+            return new GatewayTimeoutException(
+                'Gateway Timeout Error. The Microsoft OneDrive API has some problems. ' .
+                'Please try again later. API message: ' . $e->getMessage(),
                 $e->getCode(),
                 $e
             );
