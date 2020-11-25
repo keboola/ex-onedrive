@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\Api;
 
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
+use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
 use Normalizer;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
@@ -92,6 +93,13 @@ class Helpers
             return new BadRequestException(
                 'Bad request error. Please check configuration. ' .
                 'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                $e->getCode(),
+                $e
+            );
+        } elseif ($e->getCode() === 504) {
+            return new GatewayTimeoutException(
+                'Gateway Timeout Error. The Microsoft OneDrive API has some problems. ' .
+                'Please try again later. API message: ' . $e->getMessage(),
                 $e->getCode(),
                 $e
             );
