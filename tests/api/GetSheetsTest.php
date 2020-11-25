@@ -52,7 +52,10 @@ class GetSheetsTest extends BaseTest
         $driveId = $this->fixtures->getDrive()->getFile(Fixtures\FixturesCatalog::FILE_EMPTY)->getDriveId();
         $fileId = '01GQDMCCPK5MFK6QCSJFC2HYWA7AABCDEF';  // not exists
         $this->expectException(ResourceNotFoundException::class);
-        $this->expectExceptionMessage('The resource could not be found.');
+        $this->expectExceptionMessage(
+            'Not found error. Please check configuration. ' .
+            'It can be caused by typo in an ID, or resource doesn\'t exists.'
+        );
         iterator_to_array($this->api->getWorksheets($driveId, $fileId));
     }
 
@@ -61,7 +64,10 @@ class GetSheetsTest extends BaseTest
         $driveId = 'b!nZgsjp3RK0aRFp01PZWjKUicqho1KehCtKM1UhLEWybvgM_dt6mJRKV571234567'; // not exists
         $fileId = $this->fixtures->getDrive()->getFile(Fixtures\FixturesCatalog::FILE_EMPTY)->getFileId();
         $this->expectException(ResourceNotFoundException::class);
-        $this->expectExceptionMessage('The resource could not be found.');
+        $this->expectExceptionMessage(
+            'Not found error. Please check configuration. ' .
+            'It can be caused by typo in an ID, or resource doesn\'t exists.'
+        );
         iterator_to_array($this->api->getWorksheets($driveId, $fileId));
     }
 
