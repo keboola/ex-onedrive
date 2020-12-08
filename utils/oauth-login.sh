@@ -6,10 +6,9 @@ set -o nounset          # Disallow expansion of unset variables
 set -o pipefail         # Use last non-zero exit code in a pipeline
 #set -o xtrace          # Trace the execution of the script (debug)
 
-# Load env variables
+# Load env variables from .env file, but not overwrite the existing one
 if [ -f ".env" ]; then
-  IFS=' ' read -ra envPairs <<< "$(xargs < .env)" >/dev/null 2>&1
-  if [ -n "${envPairs:-}" ]; then export "${envPairs[@]}"; fi
+  source <(grep -v '^#' .env | sed -E 's|^([^=]+)=(.*)$|: ${\1=\2}; export \1|g')
 fi
 
 # Required environment variables
@@ -23,6 +22,14 @@ SCRIPT_FILENAME=$(basename "$SCRIPT")
 BASH_UTILS_IMG="bretfisher/netshoot"
 HTTP_SERVER_PORT="10000"
 HTTP_SERVER_URI="http://localhost:$HTTP_SERVER_PORT"
+
+# OAuth constants
+OAUTH_AUTHORITY_URL='https://login.microsoftonline.com/common'
+OAUTH_AUTHORIZE_ENDPOINT="$OAUTH_AUTHORITY_URL/oauth2/v2.0/authorize"
+OAUTH_TOKEN_ENDPOINT="$OAUTH_AUTHORITY_URL/oauth2/v2.0/token"
+OAUTH_SCOPE="offline_access User.Read Files.Read.All Sites.Read.All";
+# Scopes required for testing
+OAUTH_SCOPE="$OAUTH_SCOPE Files.ReadWrite.All Sites.ReadWrite.All";
 
 printInfo() {
   echo
@@ -40,7 +47,7 @@ main() {
 }
 
 runServer() {
-  # If NOT runned in Docker container run script in Docker container
+  # If NOT run in the Docker container AND "az" executable not exists locally ...
   # This part can be removed if all tools are locally installed
   if [ ! -f /.dockerenv ]; then
     echo "Running in Docker container ..."
@@ -97,17 +104,9 @@ urlencode() {
   echo "${encoded}"
 }
 
-urldecode() { 
-  : "${*//+/ }"; echo -e "${_//%/\\x}"; 
+urldecode() {
+  : "${*//+/ }"; echo -e "${_//%/\\x}";
 }
-
-# OAuth constants
-OAUTH_AUTHORITY_URL='https://login.microsoftonline.com/common'
-OAUTH_AUTHORIZE_ENDPOINT="$OAUTH_AUTHORITY_URL/oauth2/v2.0/authorize"
-OAUTH_TOKEN_ENDPOINT="$OAUTH_AUTHORITY_URL/oauth2/v2.0/token"
-OAUTH_SCOPE="offline_access User.Read Files.Read.All Sites.Read.All";
-# Scopes required for testing
-OAUTH_SCOPE="$OAUTH_SCOPE Files.ReadWrite.All Sites.ReadWrite.All";
 
 function get_authorize_url() {
   echo -n "$OAUTH_AUTHORIZE_ENDPOINT"
