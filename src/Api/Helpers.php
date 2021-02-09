@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
+use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
 use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
 use Normalizer;
@@ -13,6 +14,7 @@ use Keboola\Component\JsonHelper;
 use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Psr\Http\Message\MessageInterface;
+use Throwable;
 
 class Helpers
 {
@@ -69,12 +71,14 @@ class Helpers
         return [$site, $path];
     }
 
-    public static function processRequestException(RequestException $e): \Throwable
+    public static function processRequestException(RequestException $e): Throwable
     {
         $error = Helpers::getErrorFromRequestException($e);
         if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
             $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
+        } elseif ($error && strpos($error, 'AccessDenied: Access denied') === 0) {
+            return new AccessDeniedException($error, $e->getCode(), $e);
         } elseif ($e->getCode() === 404 || ($error && strpos($error, 'ItemNotFound:') === 0)) {
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.ResourceNotFoundException"
             return new ResourceNotFoundException(
@@ -116,7 +120,7 @@ class Helpers
             $body = JsonHelper::decode($stream->getContents());
             $error = $body['error'];
             return sprintf('%s: %s', ucfirst($error['code']), $error['message']);
-        } catch (\Throwable $jsonException) {
+        } catch (Throwable $jsonException) {
             return null;
         }
     }
