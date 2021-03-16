@@ -111,6 +111,7 @@ urldecode() {
 function get_authorize_url() {
   echo -n "$OAUTH_AUTHORIZE_ENDPOINT"
   echo -n "?client_id=$(urlencode "$OAUTH_APP_ID")"
+  echo -n "&prompt=login"
   echo -n "&redirect_uri=$(urlencode "$HTTP_SERVER_URI/sign-in/callback")"
   echo -n "&scope=$(urlencode "$OAUTH_SCOPE")"
   echo -n "&response_type=code"
