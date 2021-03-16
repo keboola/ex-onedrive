@@ -80,12 +80,13 @@ class FixturesUtils
                         try {
                             $url = $this->api->pathToUrl($driveId, $relativePath . '/' . $name);
                             $this->api->delete($url);
-                        } catch (ClientException $e) {
+                        } catch (Throwable $e) {
                             // ignore if file not exits
                         }
                     }
 
                     if ($retry-- <= 0) {
+                        var_dump($e);
                         throw $e;
                     }
                 }
@@ -97,7 +98,7 @@ class FixturesUtils
     {
         // The size of each byte range MUST be a multiple of 320 KiB
         // https://docs.microsoft.com/cs-cz/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
-        $uploadFragSize = 320 * 1024 * 10; // 3.2 MiB
+        $uploadFragSize = 3200 * 1024; // 3.2 MiB
         $fileSize = filesize($localPath);
         $path = $relativePath . '/' . $name;
         $url = $this->api->pathToUrl($driveId, $relativePath . '/' . $name);
@@ -112,12 +113,15 @@ class FixturesUtils
             ->setReturnType(Model\UploadSession::class)
             ->setTimeout('1000')
             ->execute();
+        $uploadUrl = $uploadSession->getUploadUrl();
 
         // Upload file in parts
         $file = fopen($localPath, 'r');
         if (!$file) {
             throw new RuntimeException(sprintf('Cannot open file "%s".', $localPath));
         }
+
+        FixturesUtils::log(sprintf('"%s" - uploading ...', $path));
 
         try {
             while (!feof($file)) {
@@ -127,7 +131,7 @@ class FixturesUtils
                 $uploadSession = $this
                     ->api
                     ->getGraph()
-                    ->createRequest('PUT', $uploadSession->getUploadUrl())
+                    ->createRequest('PUT', $uploadUrl)
                     ->addHeaders([
                         'Content-Length' => $end - $start,
                         'Content-Range' => sprintf('bytes %d-%d/%d', $start, $end-1, $fileSize),
@@ -135,7 +139,9 @@ class FixturesUtils
                     ->attachBody($data)
                     ->setReturnType(Model\UploadSession::class)
                     ->setTimeout('1000')
-                    ->execute();
+                    ->execute() ?? $uploadSession;
+                $uploadUrl = $uploadSession->getUploadUrl() ?? $uploadUrl;
+                echo '.';
             }
         } finally {
             fclose($file);

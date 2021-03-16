@@ -25,6 +25,7 @@ class FixturesCatalog
         FILE_ONLY_ONE_COLUMN = self::BASE_DIR . '/valid/only_one_column.xlsx',
         FILE_SPECIAL_CASES = self::BASE_DIR . '/valid/special_cases.xlsx',
         FILE_TABLE_OFFSET = self::BASE_DIR . '/valid/table_offset.xlsx',
+        FILE_BIG = self::BASE_DIR . '/valid/big.xlsx',
         // Invalid
         FILE_CSV = self::BASE_DIR . '/invalid/csv_type.csv',
         FILE_ODS = self::BASE_DIR . '/invalid/ods_type.ods',
