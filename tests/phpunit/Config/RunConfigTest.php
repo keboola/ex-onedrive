@@ -141,7 +141,7 @@ class RunConfigTest extends BaseConfigTest
                 ],
             ],
             'missing-worksheet-name' => [
-                'The child node "name" at path "root.parameters.worksheet" must be configured.',
+                'The child config "name" under "root.parameters.worksheet" must be configured.',
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
@@ -155,7 +155,7 @@ class RunConfigTest extends BaseConfigTest
                 ],
             ],
             'missing-workbook' => [
-                'The child node "workbook" at path "root.parameters" must be configured.',
+                'The child config "workbook" under "root.parameters" must be configured.',
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
@@ -167,7 +167,7 @@ class RunConfigTest extends BaseConfigTest
                 ],
             ],
             'missing-worksheet' => [
-                'The child node "worksheet" at path "root.parameters" must be configured.',
+                'The child config "worksheet" under "root.parameters" must be configured.',
                 [
                     'authorization' => $this->getValidAuthorization(),
                     'parameters' => [
