@@ -83,7 +83,8 @@ class Helpers
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.ResourceNotFoundException"
             return new ResourceNotFoundException(
                 'Not found error. Please check configuration. ' .
-                'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                'It can be caused by typo in an ID, or resource doesn\'t exists. API message: ' .
+                $e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -94,7 +95,8 @@ class Helpers
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.InvalidClientQueryException"
             return new BadRequestException(
                 'Bad request error. Please check configuration. ' .
-                'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                'It can be caused by typo in an ID, or resource doesn\'t exists. API message: ' .
+                $e->getMessage(),
                 $e->getCode(),
                 $e
             );
