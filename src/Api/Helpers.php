@@ -148,7 +148,7 @@ class Helpers
 
     public static function toAscii(string $str): string
     {
-        $str = Normalizer::normalize($str, Normalizer::FORM_D);
+        $str = (string) Normalizer::normalize($str, Normalizer::FORM_D);
         $str = (string) preg_replace('~\pM~u', '', $str);
         $str = (string) preg_replace('~[^a-zA-Z0-9\-.]+~', '_', $str);
         $str = trim($str, '_');

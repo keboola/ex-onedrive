@@ -97,7 +97,7 @@ class GetWorksheetsConfigTest extends BaseConfigTest
                 ],
             ],
             'missing-workbook' => [
-                'The child node "workbook" at path "root.parameters" must be configured.',
+                'The child config "workbook" under "root.parameters" must be configured.',
                 [
                     'action' => 'getWorksheets',
                     'authorization' => $this->getValidAuthorization(),
