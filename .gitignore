@@ -2,5 +2,6 @@
 /.idea
 /data
 /tests/fixtures/.fixturesCatalog
+/.phpunit.result.cache
 *.env
 
