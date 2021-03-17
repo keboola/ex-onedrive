@@ -105,6 +105,14 @@ class HelpersTest extends TestCase
         Assert::assertSame($expected, Helpers::formatIterable($values, $maxItems, 10));
     }
 
+    /**
+     * @dataProvider getColumns
+     */
+    public function testColumnStrToInt(int $expected, string $input): void
+    {
+        Assert::assertSame($expected, Helpers::columnStrToInt($input));
+    }
+
     public function getInputs(): array
     {
         return [
@@ -283,6 +291,22 @@ class HelpersTest extends TestCase
             [['a', 'some long string', 'c'], 2, '"a", "some long ...", ...'],
             [['a', 'b', 'some long string'], 2, '"a", "b", ...'],
 
+        ];
+    }
+
+    public function getColumns(): array
+    {
+        return [
+            [1, 'A'],
+            [2, 'B'],
+            [3, 'C'],
+            [26, 'Z'],
+            [27, 'AA'],
+            [28, 'AB'],
+            [29, 'AC'],
+            [52, 'AZ'],
+            [53, 'BA'],
+            [731, 'ABC'],
         ];
     }
 }

@@ -75,6 +75,17 @@ class Config extends BaseConfig
         return $this->getValue(['parameters', 'worksheet', 'name']);
     }
 
+    public function getRowsLimit(): ?int
+    {
+        return $this->getValue(['parameters', 'rowsLimit']);
+    }
+
+    public function getCellPerBulk(): int
+    {
+        return $this->getValue(['parameters', 'cellsPerBulk']);
+    }
+
+
     public function getOAuthApiData(): array
     {
         $data = parent::getOAuthApiData();

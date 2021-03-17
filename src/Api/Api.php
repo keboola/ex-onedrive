@@ -7,6 +7,7 @@ namespace Keboola\OneDriveExtractor\Api;
 use Iterator;
 use ArrayIterator;
 use GuzzleHttp\Exception\RequestException;
+use Keboola\OneDriveExtractor\Api\Model\TableRange;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
@@ -28,6 +29,11 @@ use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
 
 class Api
 {
+    // API can work with max. 5M cells
+    public const DEFAULT_CELLS_PER_BULK = 1_000_000;
+
+    public const RETRY_MAX_TRIES = 10;
+
     public const RETRY_HTTP_CODES = [
         409, // 409 Conflict
         500, // 500 Internal Serve Error
@@ -52,41 +58,56 @@ class Api
         return (string) $response['userPrincipalName'];
     }
 
-    public function getWorksheetContent(string $driveId, string $fileId, string $worksheetId): SheetContent
+    public function getUsedRange(string $driveId, string $fileId, string $worksheetId): TableRange
     {
         $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
-        $uri = $endpoint . '/usedRange(valuesOnly=true)?$select=address,text';
-
-        // Get rows
+        $uri = $endpoint . '/usedRange(valuesOnly=true)?$select=address';
         $response = $this->get($uri, ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheetId]);
         $body = $response->getBody();
-        $rows = $body['text'];
 
-        // Pagination is not supported by this endpoint
-        /** @var string|null $nextLink */
-        $nextLink = $response->getNextLink();
-        assert($nextLink === null);
-
-        // Parse header
+        // Parse range
         $address = $body['address'];
-        $headerCells = array_shift($rows);
-        $header = TableHeader::from($address, $headerCells);
+        return TableRange::from($address);
+    }
+
+    public function getWorksheetContent(
+        string $driveId,
+        string $fileId,
+        string $worksheetId,
+        ?int $rowsLimit = null,
+        int $cellsPerBulk = self::DEFAULT_CELLS_PER_BULK
+    ): SheetContent {
+        $usedRange = $this->getUsedRange($driveId, $fileId, $worksheetId);
+        $header = $this->getWorksheetHeader($driveId, $fileId, $worksheetId);
+
+        // Is empty?
         if (empty($header->getColumns())) {
             throw new SheetEmptyException('Spreadsheet is empty.');
         }
 
-        // Convert to iterator (in will be able to load per parts in future)
-        $iterator = new ArrayIterator($rows);
+        // Skip header row
+        $rowsRange = $usedRange->skipRows($header->getRowsCount());
 
-        // Log
+        // We don't need to load more rows in one bulk than the limit.
+        $cellsLimit = $rowsLimit && $rowsRange ? $rowsLimit * $rowsRange->getColumnsCount() : null;
+        $cellsPerBulk = $cellsLimit && $cellsLimit < $cellsPerBulk ? $cellsLimit : $cellsPerBulk;
+
+        // Log total rows count
         $this->logger->info(sprintf(
-            'Loaded sheet with %d rows, header: %s',
-            $iterator->count(),
-            Helpers::formatIterable($header->getColumns())
+            'Number of rows in the sheet: %d header + %d',
+            $header->getRowsCount(),
+            $rowsRange ? $rowsRange->getRowsCount() : 0
         ));
 
-        // Encapsulate
-        return SheetContent::from($header, $address, $iterator);
+        // Log limit
+        if ($rowsLimit) {
+            $this->logger->info(sprintf('Configured rows limit: %d', $rowsLimit));
+        }
+
+        $iterator = $rowsRange ?
+            $this->getRowsForRange($driveId, $fileId, $worksheetId, $rowsRange, $rowsLimit, $cellsPerBulk) :
+            new ArrayIterator([]);
+        return new SheetContent($header, $usedRange, $iterator);
     }
 
     public function getWorksheetHeader(string $driveId, string $fileId, string $worksheetId): TableHeader
@@ -102,7 +123,7 @@ class Api
 
         // Log
         $this->logger->info(sprintf(
-            'Found sheet, header (%s:%s): %s',
+            'Sheet header (%s:%s): %s',
             $header->getStartCell(),
             $header->getEndCell(),
             Helpers::formatIterable($header->getColumns()),
@@ -253,9 +274,55 @@ class Api
         return $this->executeWithRetry('POST', $uri, $params, $body);
     }
 
+    private function getRowsForRange(
+        string $driveId,
+        string $fileId,
+        string $worksheetId,
+        TableRange $range,
+        ?int $rowsLimit,
+        int $cellsPerBulk
+    ): Iterator {
+        $rowsCount = 0;
+        foreach ($range->split($cellsPerBulk, $rowsLimit) as $subRange) {
+            foreach ($this->getRowsForAddress($driveId, $fileId, $worksheetId, $subRange->getAddress()) as &$row) {
+                yield $row;
+                $rowsCount++;
+            };
+        }
+
+        $this->logger->info(sprintf('Exported all %d rows.', $rowsCount));
+    }
+
+    private function getRowsForAddress(
+        string $driveId,
+        string $fileId,
+        string $worksheetId,
+        string $address
+    ): ArrayIterator {
+        $this->logger->info(sprintf('Exporting range "%s".', $address));
+        $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
+        $uri = $endpoint . '/range(address=\'{address}\')?$select=address,text';
+        $response = $this->get($uri, [
+            'driveId' => $driveId,
+            'fileId' => $fileId,
+            'worksheetId' => $worksheetId,
+            'address' => $address,
+        ]);
+
+        // Pagination is not supported by this endpoint
+        /** @var string|null $nextLink */
+        $nextLink = $response->getNextLink();
+        if ($nextLink !== null) {
+            throw new UnexpectedValueException('API response contains link to next page. It is not expected.');
+        }
+
+        $body = $response->getBody();
+        return new ArrayIterator($body['text']);
+    }
+
     private function executeWithRetry(string $method, string $uri, array $params = [], array $body = []): GraphResponse
     {
-        $backOffPolicy = new ExponentialBackOffPolicy(100, 2.0, 2000);
+        $backOffPolicy = new ExponentialBackOffPolicy(500, 2.0, 4000);
         $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
             if ($e instanceof RequestException || $e instanceof BatchRequestException) {
                 // Retry only on defined HTTP codes
@@ -270,9 +337,9 @@ class Api
             }
 
             return false;
-        });
+        }, self::RETRY_MAX_TRIES);
 
-        $proxy = new RetryProxy($retryPolicy, $backOffPolicy);
+        $proxy = new RetryProxy($retryPolicy, $backOffPolicy, $this->logger);
         return $proxy->call(function () use ($method, $uri, $params, $body) {
             return $this->execute($method, $uri, $params, $body);
         });

@@ -1,0 +1,23 @@
+{
+  "authorization": {
+    "oauth_api": {
+      "credentials": {
+        "#data": "${OAUTH_DATA}",
+        "#appSecret": "${OAUTH_APP_SECRET}",
+        "appKey": "${OAUTH_APP_ID}"
+      }
+    }
+  },
+  "parameters": {
+    "workbook": {
+      "driveId": "${FIXTURES_CATALOG::DRIVE::FILE_BIG::getDriveId}",
+      "fileId": "${FIXTURES_CATALOG::DRIVE::FILE_BIG::getFileId}"
+    },
+    "worksheet": {
+      "name":  "big-table",
+      "id": "${FIXTURES_CATALOG::DRIVE::FILE_BIG::getWorksheetId::0}"
+    },
+    "rowsLimit": 17,
+    "cellsPerBulk": 50
+  }
+}

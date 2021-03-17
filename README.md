@@ -26,6 +26,8 @@ The configuration `config.json` contains following properties in `parameters` ke
        - Serves to store human-readable data (eg. sheet name ) when `id` is used to define `worksheet`.
        - The component code is not using content of this metadata.
        - UI can use it to store and later show metadata from FilePicker.
+- `rowsLimit` - int (optional): Export only first N rows.
+- `cellsPerBulk` - int (optional) - default `1 000 000`. Maximum number of the cells loaded by the one API request.
 
 **Examples of `config.json`**
 
