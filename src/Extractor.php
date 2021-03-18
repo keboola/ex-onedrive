@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor;
 
+use Keboola\OneDriveExtractor\Configuration\Config;
 use Psr\Log\LoggerInterface;
 use Keboola\Component\Manifest\ManifestManager;
 use Keboola\Component\Manifest\ManifestManager\Options\OutTableManifestOptions;
@@ -17,6 +18,8 @@ class Extractor
 
     private ManifestManager $manifestManager;
 
+    private Config $config;
+
     private Api $api;
 
     private string $outputDir;
@@ -26,12 +29,14 @@ class Extractor
     public function __construct(
         LoggerInterface $logger,
         ManifestManager $manifestManager,
+        Config $config,
         Api $api,
         string $dataDir,
         string $outputTable
     ) {
         $this->logger = $logger;
         $this->manifestManager = $manifestManager;
+        $this->config = $config;
         $this->api = $api;
         $this->outputDir = $dataDir . '/out/tables';
         $this->outputTable = $outputTable;
@@ -43,7 +48,9 @@ class Extractor
             $sheetContent = $this->api->getWorksheetContent(
                 $sheet->getDriveId(),
                 $sheet->getFileId(),
-                $sheet->getWorksheetId()
+                $sheet->getWorksheetId(),
+                $this->config->getRowsLimit(),
+                $this->config->getCellPerBulk(),
             );
         } catch (SheetEmptyException $e) {
             $this->logger->warning('Sheet is empty. Nothing was exported.');

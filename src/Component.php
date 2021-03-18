@@ -100,6 +100,7 @@ class Component extends BaseComponent
         return new Extractor(
             $this->getLogger(),
             $this->getManifestManager(),
+            $this->getConfig(),
             $this->api,
             $this->getDataDir(),
             $config->getWorksheetName(),

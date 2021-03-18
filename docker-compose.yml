@@ -4,6 +4,7 @@ services:
     build: .
     volumes:
       - ./:/code
+      - ./data:/data
     environment:
      - OAUTH_APP_NAME
      - OAUTH_APP_ID

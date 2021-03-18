@@ -180,4 +180,29 @@ class Helpers
 
         return $out;
     }
+
+    /**
+     * Convert Excel column name to it int position.
+     * See https://stackoverflow.com/questions/848147
+     * Eg. A => 1, B => 2, AA => 27, ...
+     */
+    public static function columnStrToInt(string $columnName): int
+    {
+        if ($columnName === '') {
+            throw new InvalidArgumentException('Column name cannot be empty.');
+        }
+
+        $columnName = strtoupper($columnName);
+        $columnNumber = 0;
+        $pow = 1;
+        foreach (array_reverse(str_split($columnName)) as $letter) {
+            if (!preg_match('~^[A-Z]$~', $letter)) {
+                throw new InvalidArgumentException(sprintf('Unexpected letter, expected A-Z, given: "%s"', $letter));
+            }
+            $columnNumber += (ord($letter) - 65 + 1) * $pow;
+            $pow *= 26;
+        }
+
+        return $columnNumber;
+    }
 }

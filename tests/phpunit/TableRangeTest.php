@@ -39,6 +39,19 @@ class TableRangeTest extends TestCase
         TableRange::parseStartEnd($input);
     }
 
+    /**
+     * @dataProvider getSplitData
+     */
+    public function testSplit(string $input, int $cellsPerBulk, ?int $limitRows, array $expected): void
+    {
+        $range = TableRange::from($input);
+        $ranges = array_map(
+            fn (TableRange $subRange) => $subRange->getAddress(),
+            iterator_to_array($range->split($cellsPerBulk, $limitRows))
+        );
+        Assert::assertSame($expected, $ranges);
+    }
+
     public function getStartsEndsValid(): array
     {
         return [
@@ -82,6 +95,57 @@ class TableRangeTest extends TestCase
         return [
             [''],
             ['abc'],
+        ];
+    }
+
+    public function getSplitData(): iterable
+    {
+        // Max 1M cells per bulk -> all rows 1 address range
+        yield [
+            'Sheet1!B123:I456',
+            1000000,
+            null,
+            ['B123:I456'],
+        ];
+
+        // Max 2 cells per bulk, but 3 columns in row, -> 1 address range for each row (minimum)
+        yield [
+            'Sheet1!A123:C125',
+            2,
+            null,
+            ['A123:C123', 'A124:C124', 'A125:C125'],
+        ];
+
+        // Max 3 cells per bulk -> 1 address range for each row
+        yield [
+            'Sheet1!A123:C125',
+            3,
+            null,
+            ['A123:C123', 'A124:C124', 'A125:C125'],
+        ];
+
+        // Max 4 cells per bulk -> it is not enough for 2 rows -> 1 address range for each row
+        yield [
+            'Sheet1!A123:C125',
+            3,
+            null,
+            ['A123:C123', 'A124:C124', 'A125:C125'],
+        ];
+
+        // Max 8 cells per bulk -> 2 rows + 2 rows + 1 row
+        yield [
+            'Sheet1!A123:C127',
+            8,
+            null,
+            ['A123:C124', 'A125:C126', 'A127:C127'],
+        ];
+
+        // Limit number of rows
+        yield [
+            'Sheet1!B123:I456',
+            1000000,
+            12,
+            ['B123:I134'],
         ];
     }
 }

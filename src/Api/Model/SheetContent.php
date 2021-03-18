@@ -14,12 +14,6 @@ class SheetContent
 
     private Iterator $rows;
 
-    public static function from(TableHeader $header, string $address, Iterator $rows): self
-    {
-        $range = TableRange::from($address);
-        return new self($header, $range, $rows);
-    }
-
     public function __construct(TableHeader $header, TableRange $range, Iterator $rows)
     {
         $this->header = $header;
