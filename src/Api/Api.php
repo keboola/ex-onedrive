@@ -357,6 +357,19 @@ class Api
         try {
             return $request->execute();
         } catch (RequestException $e) {
+            # Log response of the failed API request
+            $response = $e->getResponse();
+            if ($response) {
+                $body = $response->getBody();
+                $body->rewind();
+                $this->logger->error(sprintf(
+                    'API request failed, uri: "%s", response: "%s".',
+                    $e->getRequest()->getUri(),
+                    $body->getContents(),
+                ));
+            }
+
+            // Convert to user exception
             throw Helpers::processRequestException($e);
         }
     }
