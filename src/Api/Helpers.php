@@ -83,8 +83,7 @@ class Helpers
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.ResourceNotFoundException"
             return new ResourceNotFoundException(
                 'Not found error. Please check configuration. ' .
-                'It can be caused by typo in an ID, or resource doesn\'t exists. API message: ' .
-                $e->getMessage(),
+                'It can be caused by typo in an ID, or resource doesn\'t exists.',
                 $e->getCode(),
                 $e
             );
@@ -95,15 +94,14 @@ class Helpers
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.InvalidClientQueryException"
             return new BadRequestException(
                 'Bad request error. Please check configuration. ' .
-                'It can be caused by typo in an ID, or resource doesn\'t exists. API message: ' .
-                $e->getMessage(),
+                'It can be caused by typo in an ID, or resource doesn\'t exists.',
                 $e->getCode(),
                 $e
             );
         } elseif ($e->getCode() === 504) {
             return new GatewayTimeoutException(
                 'Gateway Timeout Error. The Microsoft OneDrive API has some problems. ' .
-                'Please try again later. API message: ' . $e->getMessage(),
+                'Please try again later.',
                 $e->getCode(),
                 $e
             );

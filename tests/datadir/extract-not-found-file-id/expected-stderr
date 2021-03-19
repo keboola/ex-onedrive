@@ -1,1 +1,2 @@
-Bad request error. Please check configuration. It can be caused by typo in an ID, or resource doesn't exists. API message:%A
+API request failed, uri: "%A", response: "%A".
+Bad request error. Please check configuration. It can be caused by typo in an ID, or resource doesn't exists.
