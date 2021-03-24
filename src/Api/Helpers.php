@@ -7,6 +7,7 @@ namespace Keboola\OneDriveExtractor\Api;
 use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
 use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
+use Keboola\OneDriveExtractor\Exception\NotSupportedException;
 use Normalizer;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
@@ -95,6 +96,13 @@ class Helpers
             return new BadRequestException(
                 'Bad request error. Please check configuration. ' .
                 'It can be caused by typo in an ID, or resource doesn\'t exists.',
+                $e->getCode(),
+                $e
+            );
+        } elseif ($e->getCode() === 501) {
+            $message = $error ?? $e->getMessage();
+            return new NotSupportedException(
+                'Operation not supported by API:' . $message,
                 $e->getCode(),
                 $e
             );
