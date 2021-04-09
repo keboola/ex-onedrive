@@ -9,6 +9,7 @@ use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Api\GraphApiFactory;
 use Keboola\OneDriveExtractor\Api\Helpers;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
+use League\OAuth2\Client\Token\AccessToken;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
 use Retry\BackOff\ExponentialBackOffPolicy;
@@ -96,13 +97,9 @@ class FixturesApi
     private function createGraphApi(): Graph
     {
         $apiFactory = new GraphApiFactory();
-        return $apiFactory->create(
-            (string) getenv('OAUTH_APP_ID'),
-            (string) getenv('OAUTH_APP_SECRET'),
-            [
-                'access_token' => getenv('OAUTH_ACCESS_TOKEN'),
-                'refresh_token' => getenv('OAUTH_REFRESH_TOKEN'),
-            ]
-        );
+        return $apiFactory->create(new AccessToken([
+            'access_token' => getenv('OAUTH_ACCESS_TOKEN'),
+            'refresh_token' => getenv('OAUTH_REFRESH_TOKEN'),
+        ]));
     }
 }
