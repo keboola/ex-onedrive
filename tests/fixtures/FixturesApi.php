@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Fixtures;
 
+use ArrayObject;
 use GuzzleHttp\Exception\RequestException;
 use Keboola\OneDriveExtractor\Api\Api;
 use Keboola\OneDriveExtractor\Api\GraphApiFactory;
 use Keboola\OneDriveExtractor\Api\Helpers;
+use Keboola\OneDriveExtractor\Auth\TokenDataManager;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
+use Keboola\OneDriveExtractor\Auth\RefreshTokenProvider;
 use League\OAuth2\Client\Token\AccessToken;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
@@ -96,10 +99,17 @@ class FixturesApi
 
     private function createGraphApi(): Graph
     {
+        $appId = (string) getenv('OAUTH_APP_ID');
+        $appSecret = (string) getenv('OAUTH_APP_SECRET');
+        $accessToken = (string) getenv('OAUTH_ACCESS_TOKEN');
+        $refreshToken = (string) getenv('OAUTH_REFRESH_TOKEN');
+        $oauthData = [
+                'access_token' => $accessToken,
+                'refresh_token' => $refreshToken,
+            ];
+        $dataManager = new TokenDataManager($oauthData, new ArrayObject());
+        $tokenProvider = new RefreshTokenProvider($appId, $appSecret, $dataManager);
         $apiFactory = new GraphApiFactory();
-        return $apiFactory->create(new AccessToken([
-            'access_token' => getenv('OAUTH_ACCESS_TOKEN'),
-            'refresh_token' => getenv('OAUTH_REFRESH_TOKEN'),
-        ]));
+        return $apiFactory->create($tokenProvider->get());
     }
 }
