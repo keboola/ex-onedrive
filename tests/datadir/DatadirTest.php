@@ -132,6 +132,9 @@ class DatadirTest extends AbstractDatadirTestCase
         Process $runProcess,
         string $tempDatadir
     ): void {
+        // Remove state.json, we cannot check it, it contains a dynamic new tokens, see OAuthTest
+        @unlink($tempDatadir . '/out/state.json');
+
         if ($specification->getExpectedReturnCode() !== null) {
             $this->assertProcessReturnCode($specification->getExpectedReturnCode(), $runProcess);
         } else {

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor;
 
+use ArrayObject;
+use Keboola\OneDriveExtractor\Auth\TokenProviderFactory;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
 use Keboola\OneDriveExtractor\Api\Api;
@@ -20,6 +22,8 @@ class Component extends BaseComponent
     public const ACTION_SEARCH = 'search';
     public const ACTION_GET_WORKSHEETS = 'getWorksheets';
 
+    private ArrayObject $stateObject;
+
     private Api $api;
 
     private SheetProvider $sheetProvider;
@@ -28,13 +32,22 @@ class Component extends BaseComponent
     {
         parent::__construct($logger);
         $config = $this->getConfig();
-        $apiFactory = new ApiFactory($logger);
-        $this->api = $apiFactory->create(
-            $config->getOAuthApiAppKey(),
-            $config->getOAuthApiAppSecret(),
-            $config->getOAuthApiData()
-        );
+        $this->stateObject = new ArrayObject($this->getInputState());
+
+        $tokenProviderFactory = new TokenProviderFactory($config, $this->stateObject);
+        $tokenProvider = $tokenProviderFactory->create();
+        $apiFactory = new ApiFactory($logger, $tokenProvider);
+        $this->api = $apiFactory->create();
         $this->sheetProvider = new SheetProvider($this->api, $this->getConfig());
+    }
+
+    public function execute(): void
+    {
+        try {
+            parent::execute();
+        } finally {
+            $this->writeOutputStateToFile($this->stateObject->getArrayCopy());
+        }
     }
 
     public function getConfig(): Config
