@@ -32,7 +32,7 @@ class Api
     // API can work with max. 5M cells
     public const DEFAULT_CELLS_PER_BULK = 1_000_000;
 
-    public const RETRY_MAX_TRIES = 10;
+    public const RETRY_MAX_TRIES = 14;
 
     public const RETRY_HTTP_CODES = [
         409, // 409 Conflict
@@ -322,7 +322,7 @@ class Api
 
     private function executeWithRetry(string $method, string $uri, array $params = [], array $body = []): GraphResponse
     {
-        $backOffPolicy = new ExponentialBackOffPolicy(500, 2.0, 4000);
+        $backOffPolicy = new ExponentialBackOffPolicy(500, 2.0, 5000);
         $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
             if ($e instanceof RequestException || $e instanceof BatchRequestException) {
                 // Retry only on defined HTTP codes
