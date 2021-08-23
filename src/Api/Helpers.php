@@ -6,6 +6,7 @@ namespace Keboola\OneDriveExtractor\Api;
 
 use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
+use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
 use Keboola\OneDriveExtractor\Exception\NotSupportedException;
 use Normalizer;
@@ -72,9 +73,12 @@ class Helpers
         return [$site, $path];
     }
 
-    public static function processRequestException(RequestException $e): Throwable
+    public static function processRequestException(Throwable $e): Throwable
     {
+
         $error = Helpers::getErrorFromRequestException($e);
+
+
         if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
             $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
@@ -118,14 +122,21 @@ class Helpers
         return $e;
     }
 
-    public static function getErrorFromRequestException(RequestException $exception): ?string
+    public static function getErrorFromRequestException(Throwable $exception): ?string
     {
-        try {
+        if ($exception instanceof RequestException) {
             /** @var MessageInterface $response */
             $response = $exception->getResponse();
             $stream = $response->getBody();
             $stream->rewind();
             $body = JsonHelper::decode($stream->getContents());
+        } elseif ($exception instanceof BatchRequestException) {
+            $body = $exception->getBody();
+        } else {
+            return null;
+        }
+
+        try {
             $error = $body['error'];
             return sprintf('%s: %s', ucfirst($error['code']), $error['message']);
         } catch (Throwable $jsonException) {
