@@ -78,7 +78,6 @@ class Helpers
 
         $error = Helpers::getErrorFromRequestException($e);
 
-
         if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
             $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
