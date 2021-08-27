@@ -20,7 +20,7 @@ env:
   OAUTH_APP_SECRET: ${{ secrets.OAUTH_APP_SECRET }}
   OAUTH_ACCESS_TOKEN: ${{ secrets.OAUTH_ACCESS_TOKEN }}
   OAUTH_REFRESH_TOKEN: ${{ secrets.OAUTH_REFRESH_TOKEN }}
-  TEST_SHAREPOINT_SITE: "Excel\ Sheets"
+  TEST_SHAREPOINT_SITE: "Excel Sheets"
 
   # Test KBC project
   KBC_STORAGE_TOKEN: ${{ secrets.KBC_STORAGE_TOKEN }}

@@ -206,7 +206,9 @@ class Api
     {
         $batch = $this->createBatchRequest();
         foreach ($this->getSites() as $site) {
-            $siteId = urlencode($site->getId());
+            // Split ID parts, eg. "keboolads.sharepoint.com,7df65f25-e443-4c7e-af...."
+            $siteIdParts = explode(',', $site->getId());
+            $siteId = urlencode($siteIdParts[0]);
             $batch->addRequest(
                 '/sites/{siteId}/drives?$select=id,name',
                 ['siteId' => $siteId],
