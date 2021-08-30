@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api\Batch;
 
+use Keboola\OneDriveExtractor\Api\Helpers;
 use Throwable;
 use Iterator;
 use NoRewindIterator;
@@ -57,12 +58,17 @@ class BatchRequest
         // Empty batch request cannot be executed, ... if empty => empty iterator is returned
         if ($this->requests) {
             $this->processedCount = 0;
-            $responses = $this->runBatchRequest();
-            foreach ($responses as $response) {
-                do {
-                    yield from $this->processBatchResponse($response);
-                    $response = $this->getNextPage($response);
-                } while ($response !== null);
+
+            try {
+                $responses = $this->runBatchRequest();
+                foreach ($responses as $response) {
+                    do {
+                        yield from $this->processBatchResponse($response);
+                        $response = $this->getNextPage($response);
+                    } while ($response !== null);
+                }
+            } catch (BatchRequestException $e) {
+                Helpers::processRequestException($e);
             }
         }
     }
@@ -131,7 +137,7 @@ class BatchRequest
                 $request->getUri(),
                 $body['error']['code'] ?? '',
                 $body['error']['message'] ?? '',
-            ), $body['error']['message'], $status);
+            ), $body['error']['message'], $body, $status);
         }
 
         // Map response body (eg. to files)

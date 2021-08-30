@@ -12,7 +12,6 @@ use Keboola\OneDriveExtractor\Api\Helpers;
 use Keboola\OneDriveExtractor\Auth\TokenDataManager;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Keboola\OneDriveExtractor\Auth\RefreshTokenProvider;
-use League\OAuth2\Client\Token\AccessToken;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
 use Retry\BackOff\ExponentialBackOffPolicy;

@@ -8,7 +8,6 @@ use Iterator;
 use ArrayIterator;
 use GuzzleHttp\Exception\RequestException;
 use Keboola\OneDriveExtractor\Api\Model\TableRange;
-use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
 use Retry\BackOff\ExponentialBackOffPolicy;
@@ -206,7 +205,9 @@ class Api
     {
         $batch = $this->createBatchRequest();
         foreach ($this->getSites() as $site) {
-            $siteId = urlencode($site->getId());
+            // Split ID parts, eg. "keboolads.sharepoint.com,7df65f25-e443-4c7e-af...."
+            $siteIdParts = explode(',', $site->getId());
+            $siteId = urlencode($siteIdParts[0]);
             $batch->addRequest(
                 '/sites/{siteId}/drives?$select=id,name',
                 ['siteId' => $siteId],
@@ -324,7 +325,7 @@ class Api
     {
         $backOffPolicy = new ExponentialBackOffPolicy(500, 2.0, 5000);
         $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
-            if ($e instanceof RequestException || $e instanceof BatchRequestException) {
+            if ($e instanceof RequestException) {
                 // Retry only on defined HTTP codes
                 if (in_array($e->getCode(), self::RETRY_HTTP_CODES, true)) {
                     return true;
