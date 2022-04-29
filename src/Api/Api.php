@@ -323,7 +323,7 @@ class Api
 
     private function executeWithRetry(string $method, string $uri, array $params = [], array $body = []): GraphResponse
     {
-        $backOffPolicy = new ExponentialBackOffPolicy(500, 2.0, 5000);
+        $backOffPolicy = new ExponentialBackOffPolicy(1000);
         $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
             if ($e instanceof RequestException) {
                 // Retry only on defined HTTP codes
