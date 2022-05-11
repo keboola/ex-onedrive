@@ -35,6 +35,7 @@ class Api
 
     public const RETRY_HTTP_CODES = [
         409, // 409 Conflict
+        429, // 429 Too Many Requests
         500, // 500 Internal Serve Error
         502, // 502 Bad Gateway
         503, // 503 Service Unavailable
