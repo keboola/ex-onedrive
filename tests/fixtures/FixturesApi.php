@@ -20,8 +20,6 @@ use Retry\RetryProxy;
 
 class FixturesApi
 {
-    private const RETRY_HTTP_CODES = Api::RETRY_HTTP_CODES;
-
     private Graph $graphApi;
 
     public function __construct()
@@ -55,7 +53,7 @@ class FixturesApi
         $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
             if ($e instanceof RequestException || $e instanceof BatchRequestException) {
                 // Retry only on defined HTTP codes
-                if (in_array($e->getCode(), self::RETRY_HTTP_CODES, true)) {
+                if (in_array($e->getCode(), Api::RETRY_HTTP_CODES, true)) {
                     return true;
                 }
 

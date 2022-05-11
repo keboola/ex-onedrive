@@ -17,7 +17,7 @@ class SitesTest extends BaseTest
         // In testing account are sharePoint site present, so mock it
         $mock = $this
             ->getMockBuilder(Api::class)
-            ->setConstructorArgs([$this->createGraphApi(), $this->logger])
+            ->setConstructorArgs([$this->createGraphApi(), $this->logger, 2])
             ->setMethods(['getSites'])
             ->getMock();
         $mock->method('getSites')->willReturn(new ArrayIterator([])); // no site

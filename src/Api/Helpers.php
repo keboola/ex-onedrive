@@ -75,7 +75,6 @@ class Helpers
 
     public static function processRequestException(Throwable $e): Throwable
     {
-
         $error = Helpers::getErrorFromRequestException($e);
 
         if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
