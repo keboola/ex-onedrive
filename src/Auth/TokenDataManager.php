@@ -34,14 +34,14 @@ class TokenDataManager
 
     public function load(): iterable
     {
+        // Or use default from the configuration
+        yield new AccessToken($this->configAuthData);
+
         // Load tokens from state.json
         $authDataJson = $this->state[self::STATE_AUTH_DATA_KEY] ?? null;
         if (is_string($authDataJson)) {
             yield new AccessToken(JsonHelper::decode($authDataJson));
         }
-
-        // Or use default from the configuration
-        yield new AccessToken($this->configAuthData);
     }
 
     public function store(AccessTokenInterface $newToken): void
