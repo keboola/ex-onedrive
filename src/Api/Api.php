@@ -219,10 +219,16 @@ class Api
     public function getSitesDrives(): Iterator
     {
         $batch = $this->createBatchRequest();
+        $siteIdsChecked = [];
+
         foreach ($this->getSites() as $site) {
             // Split ID parts, eg. "keboolads.sharepoint.com,7df65f25-e443-4c7e-af...."
             $siteIdParts = explode(',', $site->getId());
             $siteId = urlencode($siteIdParts[0]);
+            if (in_array($siteId, $siteIdsChecked)) {
+                continue;
+            }
+
             $batch->addRequest(
                 '/sites/{siteId}/drives?$select=id,name',
                 ['siteId' => $siteId],
@@ -232,6 +238,8 @@ class Api
                     }
                 }
             );
+
+            $siteIdsChecked[] = $siteId;
         }
 
         // Fetch all in one request
