@@ -123,13 +123,14 @@ class Helpers
     public static function getErrorFromRequestException(Throwable $exception): ?string
     {
         if ($exception instanceof RequestException) {
-            /** @var MessageInterface $response */
+            /** @var null|MessageInterface $response */
             $response = $exception->getResponse();
-            if ($response) {
-                $stream = $response->getBody();
-                $stream->rewind();
-                $body = JsonHelper::decode($stream->getContents());
+            if ($response === null) {
+                return null;
             }
+            $stream = $response->getBody();
+            $stream->rewind();
+            $body = JsonHelper::decode($stream->getContents());
         } elseif ($exception instanceof BatchRequestException) {
             $body = $exception->getBody();
         } else {
