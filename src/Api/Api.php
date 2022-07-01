@@ -4,27 +4,28 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
-use Iterator;
 use ArrayIterator;
 use GuzzleHttp\Exception\RequestException;
-use Keboola\OneDriveExtractor\Api\Model\TableRange;
-use Psr\Log\LoggerInterface;
-use Retry\RetryProxy;
-use Retry\BackOff\ExponentialBackOffPolicy;
-use Retry\Policy\CallableRetryPolicy;
-use Microsoft\Graph\Graph;
-use Microsoft\Graph\Http\GraphResponse;
+use Iterator;
 use Keboola\OneDriveExtractor\Api\Batch\BatchRequest;
 use Keboola\OneDriveExtractor\Api\Model\Drive;
 use Keboola\OneDriveExtractor\Api\Model\File;
-use Keboola\OneDriveExtractor\Api\Model\Site;
 use Keboola\OneDriveExtractor\Api\Model\SheetContent;
+use Keboola\OneDriveExtractor\Api\Model\Site;
 use Keboola\OneDriveExtractor\Api\Model\TableHeader;
+use Keboola\OneDriveExtractor\Api\Model\TableRange;
 use Keboola\OneDriveExtractor\Api\Model\Worksheet;
+use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Keboola\OneDriveExtractor\Exception\SheetEmptyException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedCountException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
+use Microsoft\Graph\Graph;
+use Microsoft\Graph\Http\GraphResponse;
+use Psr\Log\LoggerInterface;
+use Retry\BackOff\ExponentialBackOffPolicy;
+use Retry\Policy\CallableRetryPolicy;
+use Retry\RetryProxy;
 
 class Api
 {
@@ -35,6 +36,7 @@ class Api
 
     public const RETRY_HTTP_CODES = [
         409, // 409 Conflict
+        429, // 429 Too Many Requests
         500, // 500 Internal Serve Error
         502, // 502 Bad Gateway
         503, // 503 Service Unavailable
@@ -45,10 +47,23 @@ class Api
 
     private LoggerInterface $logger;
 
-    public function __construct(Graph $graphApi, LoggerInterface $logger)
+    private int $maxAttempts;
+
+    public function __construct(Graph $graphApi, LoggerInterface $logger, int $maxAttempts)
     {
         $this->graphApi = $graphApi;
         $this->logger = $logger;
+        $this->maxAttempts = $maxAttempts;
+    }
+
+    public function logger(): LoggerInterface
+    {
+        return $this->logger;
+    }
+
+    public function maxAttempts(): int
+    {
+        return $this->maxAttempts;
     }
 
     public function getAccountName(): string
@@ -204,10 +219,16 @@ class Api
     public function getSitesDrives(): Iterator
     {
         $batch = $this->createBatchRequest();
+        $siteIdsChecked = [];
+
         foreach ($this->getSites() as $site) {
             // Split ID parts, eg. "keboolads.sharepoint.com,7df65f25-e443-4c7e-af...."
             $siteIdParts = explode(',', $site->getId());
             $siteId = urlencode($siteIdParts[0]);
+            if (in_array($siteId, $siteIdsChecked)) {
+                continue;
+            }
+
             $batch->addRequest(
                 '/sites/{siteId}/drives?$select=id,name',
                 ['siteId' => $siteId],
@@ -217,6 +238,8 @@ class Api
                     }
                 }
             );
+
+            $siteIdsChecked[] = $siteId;
         }
 
         // Fetch all in one request
@@ -275,6 +298,33 @@ class Api
         return $this->executeWithRetry('POST', $uri, $params, $body);
     }
 
+    public function createRetry(LoggerInterface $logger, int $maxAttempts = self::RETRY_MAX_TRIES): RetryProxy
+    {
+        $backOffPolicy = new ExponentialBackOffPolicy(1000);
+        $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
+            // Always retry on gateway timeout
+            if ($e instanceof GatewayTimeoutException) {
+                return true;
+            }
+
+            if ($e instanceof RequestException) {
+                // Retry only on defined HTTP codes
+                if (in_array($e->getCode(), self::RETRY_HTTP_CODES, true)) {
+                    return true;
+                }
+
+                // Retry if communication problems
+                if (strpos($e->getMessage(), 'There were communication or server problems')) {
+                    return true;
+                }
+            }
+
+            return false;
+        }, $maxAttempts);
+        return new RetryProxy($retryPolicy, $backOffPolicy, $logger);
+    }
+
+
     private function getRowsForRange(
         string $driveId,
         string $fileId,
@@ -323,29 +373,12 @@ class Api
 
     private function executeWithRetry(string $method, string $uri, array $params = [], array $body = []): GraphResponse
     {
-        $backOffPolicy = new ExponentialBackOffPolicy(1000);
-        $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
-            if ($e instanceof RequestException) {
-                // Retry only on defined HTTP codes
-                if (in_array($e->getCode(), self::RETRY_HTTP_CODES, true)) {
-                    return true;
-                }
-
-                // Retry if communication problems
-                if (strpos($e->getMessage(), 'There were communication or server problems')) {
-                    return true;
-                }
-            }
-
-            return false;
-        }, self::RETRY_MAX_TRIES);
-
-        $proxy = new RetryProxy($retryPolicy, $backOffPolicy, $this->logger);
-        return $proxy->call(function () use ($method, $uri, $params, $body) {
-            return $this->execute($method, $uri, $params, $body);
-        });
+        return $this
+            ->createRetry($this->logger, $this->maxAttempts)
+            ->call(function () use ($method, $uri, $params, $body) {
+                return $this->execute($method, $uri, $params, $body);
+            });
     }
-
 
     private function execute(string $method, string $uri, array $params = [], array $body = []): GraphResponse
     {

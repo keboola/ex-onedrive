@@ -88,8 +88,8 @@ class FixturesCatalog
         $catalog = new self($meDrive, $sharePointSiteName, $sharePointDrive, $envHash);
         $catalog->store();
 
-        FixturesUtils::log('Sleep 120s');
-        sleep(120);
+        FixturesUtils::log('Sleep 300s');
+        sleep(300);
     }
 
     public static function load(): self

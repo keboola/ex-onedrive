@@ -19,10 +19,10 @@ class ApiFactory
         $this->tokenProvider = $tokenProvider;
     }
 
-    public function create(): Api
+    public function create(int $maxAttempts = Api::RETRY_MAX_TRIES): Api
     {
         $graphApiFactory = new GraphApiFactory();
         $graphApi = $graphApiFactory->create($this->tokenProvider->get());
-        return new Api($graphApi, $this->logger);
+        return new Api($graphApi, $this->logger, $maxAttempts);
     }
 }

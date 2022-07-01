@@ -58,18 +58,19 @@ class BatchRequest
         // Empty batch request cannot be executed, ... if empty => empty iterator is returned
         if ($this->requests) {
             $this->processedCount = 0;
-
-            try {
-                $responses = $this->runBatchRequest();
-                foreach ($responses as $response) {
-                    do {
-                        yield from $this->processBatchResponse($response);
-                        $response = $this->getNextPage($response);
-                    } while ($response !== null);
+            $retryProxy = $this->api->createRetry($this->api->logger(), $this->api->maxAttempts());
+            yield from $retryProxy->call(function (): iterator {
+                try {
+                    foreach ($this->runBatchRequest() as $response) {
+                        do {
+                            yield from $this->processBatchResponse($response);
+                            $response = $this->getNextPage($response);
+                        } while ($response !== null);
+                    }
+                } catch (BatchRequestException $e) {
+                    Helpers::processRequestException($e);
                 }
-            } catch (BatchRequestException $e) {
-                Helpers::processRequestException($e);
-            }
+            });
         }
     }
 

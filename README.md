@@ -1,7 +1,5 @@
 # Keboola OneDrive Extractor
 
-[![Build Status](https://travis-ci.com/keboola/ex-onedrive.svg?branch=master)](https://travis-ci.com/keboola/ex-onedrive)
-
 Extracts spreadsheets from OneDrive
 
 ## Configuration
@@ -191,7 +189,7 @@ Otherwise, an error is returned.
 For development it is necessary to:
   - Have an [Application in Microsoft identity platform](#application-in-microsoft-identity-platform)
     - Env variables: `OAUTH_APP_NAME`, `OAUTH_APP_ID`, `OAUTH_APP_SECRET`
-    - You can use script to create app: `utils/oauth-app-setup.sh` 
+    - You can use script to create app: `utils/oauth-app-registration.sh` 
     - Permissions (scopes): 
         - Component itself needs: `offline_access User.Read Files.Read.All Sites.Read.All`
         - For development and run tests: `Files.ReadWrite.All Sites.ReadWrite.All`

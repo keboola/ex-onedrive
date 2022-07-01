@@ -243,6 +243,7 @@ class WorkbooksFinder
     private function getExceptionProcessor(string $target, string $search): callable
     {
         return function (Throwable $e) use ($target, $search): void {
+            $e = Helpers::processRequestException($e);
             if ($e instanceof BatchRequestException) {
                 $this->logger->warning(sprintf(
                     'Error when searching for "%s" in %s: "%s" (%d).',
