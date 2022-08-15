@@ -37,7 +37,7 @@ class Component extends BaseComponent
         $tokenProviderFactory = new TokenProviderFactory($config, $this->stateObject);
         $tokenProvider = $tokenProviderFactory->create();
         $apiFactory = new ApiFactory($logger, $tokenProvider);
-        $maxAttempts = $this->isSyncAction() ? 3 : Api::RETRY_MAX_TRIES;
+        $maxAttempts = $this->isSyncAction() ? 1 : Api::RETRY_MAX_TRIES;
         $this->api = $apiFactory->create($maxAttempts);
         $this->sheetProvider = new SheetProvider($this->api, $this->getConfig());
     }
