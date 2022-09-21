@@ -78,6 +78,7 @@ class Api
             [],
             [
                 'Prefer' => 'respond-async',
+                'persistChanges' => false,
             ],
         );
 
