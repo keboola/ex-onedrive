@@ -69,7 +69,7 @@ class Api
     public function getWorkbookSessionId(string $driveId, string $fileId): ?string
     {
         $uri = '/drives/{driveId}/items/{fileId}/workbook/createSession';
-        $responseHeader = $this->post(
+        $response = $this->post(
             $uri,
             [
                 'driveId' => $driveId,
@@ -79,24 +79,35 @@ class Api
             [
                 'Prefer' => 'respond-async',
             ],
-        )->getHeaders();
+        );
 
-        $sessionLocation = current($responseHeader['Location']);
+        switch ($response->getStatus()) {
+            case 201:
+                return $response->getBody()['id'];
+            case 202:
+                $responseHeader = $response->getHeaders();
 
-        $status = 'running';
-        while ($status === 'running') {
-            sleep(2);
-            $session = $this->get($sessionLocation)->getBody();
-            $status = $session['status'];
+                $sessionLocation = current($responseHeader['Location']);
+
+                $status = 'running';
+                while ($status === 'running') {
+                    sleep(2);
+                    $session = $this->get($sessionLocation)->getBody();
+                    $status = $session['status'];
+                }
+
+                if ($status !== 'succeeded') {
+                    $this->logger->info('The workbook session could not be created.');
+                    return null;
+                }
+
+                $sessionResource = $this->get($session['resourceLocation'])->getBody();
+
+                return $sessionResource['id'];
+            default:
+                $this->logger->info('The workbook session could not be created.');
+                return null;
         }
-
-        if ($status !== 'succeeded') {
-            return null;
-        }
-
-        $sessionResource = $this->get($session['resourceLocation'])->getBody();
-
-        return $sessionResource['id'];
     }
 
     public function getAccountName(): string
