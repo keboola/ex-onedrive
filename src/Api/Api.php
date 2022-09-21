@@ -75,10 +75,11 @@ class Api
                 'driveId' => $driveId,
                 'fileId' => $fileId,
             ],
-            [],
             [
-                'Prefer' => 'respond-async',
                 'persistChanges' => false,
+            ],
+            [
+                'Prefer' => 'respond-async'
             ],
         );
 
