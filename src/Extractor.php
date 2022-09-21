@@ -45,12 +45,18 @@ class Extractor
     public function extract(Sheet $sheet): void
     {
         try {
+            $sessionId = $this->api->getWorkbookSessionId(
+                $sheet->getDriveId(),
+                $sheet->getFileId(),
+            );
+
             $sheetContent = $this->api->getWorksheetContent(
                 $sheet->getDriveId(),
                 $sheet->getFileId(),
                 $sheet->getWorksheetId(),
                 $this->config->getRowsLimit(),
                 $this->config->getCellPerBulk(),
+                $sessionId,
             );
         } catch (SheetEmptyException $e) {
             $this->logger->warning('Sheet is empty. Nothing was exported.');

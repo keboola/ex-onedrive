@@ -21,7 +21,7 @@ class GetContentTest extends BaseTest
     ): void {
         $fixture = $this->fixtures->getDrive()->getFile($fileName);
         $worksheetId = $this->api->getWorksheetId($fixture->getDriveId(), $fixture->getFileId(), $worksheetPosition);
-        $header = $this->api->getWorksheetHeader($fixture->getDriveId(), $fixture->getFileId(), $worksheetId);
+        $header = $this->api->getWorksheetHeader($fixture->getDriveId(), $fixture->getFileId(), $worksheetId, null);
         Assert::assertSame($expectedHeaderAddress, $header->getAddress());
         Assert::assertSame($expectedHeader, json_decode((string) json_encode($header)));
     }
@@ -30,7 +30,7 @@ class GetContentTest extends BaseTest
     {
         $fixture = $this->fixtures->getDrive()->getFile(FixturesCatalog::FILE_EMPTY);
         $worksheetId = $this->api->getWorksheetId($fixture->getDriveId(), $fixture->getFileId(), 0);
-        $header = $this->api->getWorksheetHeader($fixture->getDriveId(), $fixture->getFileId(), $worksheetId);
+        $header = $this->api->getWorksheetHeader($fixture->getDriveId(), $fixture->getFileId(), $worksheetId, null);
         Assert::assertSame([], json_decode((string) json_encode($header)));
     }
 
