@@ -66,17 +66,58 @@ class Api
         return $this->maxAttempts;
     }
 
+    public function getWorkbookSessionId(string $driveId, string $fileId): ?string
+    {
+        $uri = '/drives/{driveId}/items/{fileId}/workbook/createSession';
+        $responseHeader = $this->post(
+            $uri,
+            [
+                'driveId' => $driveId,
+                'fileId' => $fileId,
+            ],
+            [],
+            [
+                'Prefer' => 'respond-async',
+            ],
+        )->getHeaders();
+
+        $sessionLocation = current($responseHeader['Location']);
+
+        $status = 'running';
+        while ($status === 'running') {
+            sleep(2);
+            $session = $this->get($sessionLocation)->getBody();
+            $status = $session['status'];
+        }
+
+        if ($status !== 'succeeded') {
+            return null;
+        }
+
+        $sessionResource = $this->get($session['resourceLocation'])->getBody();
+
+        return $sessionResource['id'];
+    }
+
     public function getAccountName(): string
     {
         $response = $this->get('/me?$select=userPrincipalName')->getBody();
         return (string) $response['userPrincipalName'];
     }
 
-    public function getUsedRange(string $driveId, string $fileId, string $worksheetId): TableRange
+    public function getUsedRange(string $driveId, string $fileId, string $worksheetId, ?string $sessionId): TableRange
     {
         $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
         $uri = $endpoint . '/usedRange(valuesOnly=true)?$select=address';
-        $response = $this->get($uri, ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheetId]);
+        $headers = [];
+        if ($sessionId) {
+            $headers['Workbook-Session-Id'] = $sessionId;
+        }
+        $response = $this->get(
+            $uri,
+            ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheetId],
+            $headers
+        );
         $body = $response->getBody();
 
         // Parse range
@@ -89,10 +130,11 @@ class Api
         string $fileId,
         string $worksheetId,
         ?int $rowsLimit = null,
-        int $cellsPerBulk = self::DEFAULT_CELLS_PER_BULK
+        int $cellsPerBulk = self::DEFAULT_CELLS_PER_BULK,
+        ?string $sessionId = null
     ): SheetContent {
-        $usedRange = $this->getUsedRange($driveId, $fileId, $worksheetId);
-        $header = $this->getWorksheetHeader($driveId, $fileId, $worksheetId);
+        $usedRange = $this->getUsedRange($driveId, $fileId, $worksheetId, $sessionId);
+        $header = $this->getWorksheetHeader($driveId, $fileId, $worksheetId, $sessionId);
 
         // Is empty?
         if (empty($header->getColumns())) {
@@ -119,19 +161,27 @@ class Api
         }
 
         $iterator = $rowsRange ?
-            $this->getRowsForRange($driveId, $fileId, $worksheetId, $rowsRange, $rowsLimit, $cellsPerBulk) :
+            $this->getRowsForRange($driveId, $fileId, $worksheetId, $rowsRange, $rowsLimit, $cellsPerBulk, $sessionId) :
             new ArrayIterator([]);
         return new SheetContent($header, $usedRange, $iterator);
     }
 
-    public function getWorksheetHeader(string $driveId, string $fileId, string $worksheetId): TableHeader
-    {
+    public function getWorksheetHeader(
+        string $driveId,
+        string $fileId,
+        string $worksheetId,
+        ?string $sessionId
+    ): TableHeader {
         // Table header is first row in worksheet
         // Table can be shifted because we use "usedRange".
         $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
         $uri = $endpoint . '/usedRange(valuesOnly=true)/row(row=0)?$select=address,text';
+        $headers = [];
+        if ($sessionId) {
+            $headers['Workbook-Session-Id'] = $sessionId;
+        }
         $body = $this
-            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheetId])
+            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheetId], $headers)
             ->getBody();
         $header = TableHeader::from($body['address'], $body['text'][0]);
 
@@ -273,7 +323,6 @@ class Api
         }
     }
 
-
     /**
      * @return Iterator|File[]
      */
@@ -288,14 +337,14 @@ class Api
         return new BatchRequest($this);
     }
 
-    public function get(string $uri, array $params = []): GraphResponse
+    public function get(string $uri, array $params = [], array $headers = []): GraphResponse
     {
-        return $this->executeWithRetry('GET', $uri, $params);
+        return $this->executeWithRetry('GET', $uri, $params, [], $headers);
     }
 
-    public function post(string $uri, array $params = [], array $body = []): GraphResponse
+    public function post(string $uri, array $params = [], array $body = [], array $headers = []): GraphResponse
     {
-        return $this->executeWithRetry('POST', $uri, $params, $body);
+        return $this->executeWithRetry('POST', $uri, $params, $body, $headers);
     }
 
     public function createRetry(LoggerInterface $logger, int $maxAttempts = self::RETRY_MAX_TRIES): RetryProxy
@@ -331,11 +380,19 @@ class Api
         string $worksheetId,
         TableRange $range,
         ?int $rowsLimit,
-        int $cellsPerBulk
+        int $cellsPerBulk,
+        ?string $sessionId
     ): Iterator {
         $rowsCount = 0;
         foreach ($range->split($cellsPerBulk, $rowsLimit) as $subRange) {
-            foreach ($this->getRowsForAddress($driveId, $fileId, $worksheetId, $subRange->getAddress()) as &$row) {
+            $rowsForAddress = $this->getRowsForAddress(
+                $driveId,
+                $fileId,
+                $worksheetId,
+                $subRange->getAddress(),
+                $sessionId
+            );
+            foreach ($rowsForAddress as &$row) {
                 yield $row;
                 $rowsCount++;
             };
@@ -348,17 +405,26 @@ class Api
         string $driveId,
         string $fileId,
         string $worksheetId,
-        string $address
+        string $address,
+        ?string $sessionId
     ): ArrayIterator {
         $this->logger->info(sprintf('Exporting range "%s".', $address));
         $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
         $uri = $endpoint . '/range(address=\'{address}\')?$select=address,text';
-        $response = $this->get($uri, [
-            'driveId' => $driveId,
-            'fileId' => $fileId,
-            'worksheetId' => $worksheetId,
-            'address' => $address,
-        ]);
+        $headers = [];
+        if ($sessionId) {
+            $headers['Workbook-Session-Id'] = $sessionId;
+        }
+        $response = $this->get(
+            $uri,
+            [
+                'driveId' => $driveId,
+                'fileId' => $fileId,
+                'worksheetId' => $worksheetId,
+                'address' => $address,
+            ],
+            $headers
+        );
 
         // Pagination is not supported by this endpoint
         /** @var string|null $nextLink */
@@ -371,19 +437,32 @@ class Api
         return new ArrayIterator($body['text']);
     }
 
-    private function executeWithRetry(string $method, string $uri, array $params = [], array $body = []): GraphResponse
-    {
+    private function executeWithRetry(
+        string $method,
+        string $uri,
+        array $params = [],
+        array $body = [],
+        array $headers = []
+    ): GraphResponse {
         return $this
             ->createRetry($this->logger, $this->maxAttempts)
-            ->call(function () use ($method, $uri, $params, $body) {
-                return $this->execute($method, $uri, $params, $body);
+            ->call(function () use ($method, $uri, $params, $body, $headers) {
+                return $this->execute($method, $uri, $params, $body, $headers);
             });
     }
 
-    private function execute(string $method, string $uri, array $params = [], array $body = []): GraphResponse
-    {
+    private function execute(
+        string $method,
+        string $uri,
+        array $params = [],
+        array $body = [],
+        array $headers = []
+    ): GraphResponse {
         $uri = Helpers::replaceParamsInUri($uri, $params);
         $request = $this->graphApi->createRequest($method, $uri);
+        if ($headers) {
+            $request->addHeaders($headers);
+        }
         if ($body) {
             $request->attachBody($body);
         }
