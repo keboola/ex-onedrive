@@ -75,7 +75,9 @@ class Api
                 'driveId' => $driveId,
                 'fileId' => $fileId,
             ],
-            [],
+            [
+                'persistChanges' => false,
+            ],
             [
                 'Prefer' => 'respond-async',
             ],
@@ -248,10 +250,16 @@ class Api
      */
     public function getWorksheets(string $driveId, string $fileId): Iterator
     {
+        $sessionId = $this->getWorkbookSessionId($driveId, $fileId);
+        $headers = [];
+        if ($sessionId) {
+            $headers['Workbook-Session-Id'] = $sessionId;
+        }
+
         // Load list of worksheets in workbook
         $uri = '/drives/{driveId}/items/{fileId}/workbook/worksheets?$select=id,position,name,visibility';
         $body = $this
-            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId])
+            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId], $headers)
             ->getBody();
 
         // Map to object and load header in batch request
