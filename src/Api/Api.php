@@ -270,9 +270,11 @@ class Api
             $uri = $endpoint . '/usedRange(valuesOnly=true)/row(row=0)?$select=address,text';
             $args = ['driveId' => $driveId, 'fileId' => $fileId, 'worksheetId' => $worksheet->getWorksheetId()];
             $batch->addRequest($uri, $args, function (array $body) use ($worksheet) {
-                $header = TableHeader::from($body['address'], $body['text'][0]);
-                $worksheet->setHeader($header);
-                yield $worksheet;
+                if (isset($body['address'])) {
+                    $header = TableHeader::from($body['address'], $body['text'][0]);
+                    $worksheet->setHeader($header);
+                    yield $worksheet;
+                }
             });
         }
 
