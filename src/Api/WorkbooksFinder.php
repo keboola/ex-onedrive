@@ -270,9 +270,7 @@ class WorkbooksFinder
     private static function checkFileMimeType(array $body): void
     {
         if (!isset($body['file'])) {
-            throw new InvalidFileTypeException(sprintf(
-                'File type cannot be recognized.'
-            ));
+            throw new InvalidFileTypeException('File type cannot be recognized.');
         }
         $mimeType = $body['file']['mimeType'];
         if (!in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {
