@@ -14,7 +14,6 @@ use Keboola\OneDriveExtractor\Auth\TokenProvider;
 use Keboola\OneDriveExtractor\Auth\TokenProviderFactory;
 use Keboola\OneDriveExtractor\Configuration\Config;
 use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
-use League\OAuth2\Client\Token\AccessToken;
 use Microsoft\Graph\Graph;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Exception;
 
-use Keboola\CommonExceptions\ApplicationExceptionInterface;
+use Keboola\CommonExceptions\UserExceptionInterface;
 use Throwable;
 
-class BatchRequestException extends \Exception implements ApplicationExceptionInterface
+class BatchRequestException extends \Exception implements UserExceptionInterface
 {
     private string $originalMessage;
 
