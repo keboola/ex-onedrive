@@ -61,18 +61,25 @@ OAUTH_APP_ID=$(az ad app list --output tsv --filter "displayName eq '$OAUTH_APP_
 if [ -z "$OAUTH_APP_ID" ]; then
   echo "Application does not exist."
   echo "Creating application \"$OAUTH_APP_NAME\""
-  OAUTH_APP_SECRET=`openssl rand -base64 32`
   OAUTH_APP_ID=$(
-    az ad app create \
-      --output tsv \
-      --display-name "$OAUTH_APP_NAME" \
-      --oauth2-allow-implicit-flow true \
-      --available-to-other-tenants true \
-      --end-date '2050-12-31' \
-      --password "$OAUTH_APP_SECRET" \
-      --query "appId"
+   az ad app create \
+        --output tsv \
+        --query "appId" \
+        --is-fallback-public-client false \
+        --display-name "$OAUTH_APP_NAME" \
+        --enable-access-token-issuance true \
+        --sign-in-audience AzureADandPersonalMicrosoftAccount \
+        --end-date '2050-12-31'
   )
   echo "Application created, OAUTH_APP_ID=\"$OAUTH_APP_ID\""
+
+  # Get secret
+  OAUTH_APP_SECRET=$(az ad app credential reset \
+    --output tsv \
+    --query "password" \
+    --id "$OAUTH_APP_ID"
+  )
+
   echo "SAVE SECRET KEY!!! -> OAUTH_APP_SECRET=\"$OAUTH_APP_SECRET\""
 else
   echo "Application already exists, OAUTH_APP_ID=\"$OAUTH_APP_ID\""
@@ -102,22 +109,6 @@ if [ ${#perms_arg[@]} -ne 0 ]; then
   fi
 fi
 
-# Set public client = false
-echo "Checking \"publicClient\" property"
-publicClient=$(az ad app list --output tsv --filter "displayName eq '$OAUTH_APP_NAME'"  --query "[].publicClient | [0]")
-if [ "$publicClient" != "false" ]; then
-  echo "Setting publicClient=false"
-  az ad app update --id "$OAUTH_APP_ID"  --set "publicClient=false" || true
-fi
-
-# Allow login with all types of account
-echo "Checking \"signInAudience\" property"
-signInAudience=$(az ad app list --output tsv --filter "displayName eq '$OAUTH_APP_NAME'"  --query "[].signInAudience | [0]")
-if [ "$signInAudience" != "AzureADMultipleOrgs" ]; then
-  echo "WARNING: Property \"signInAudience\" = \"$signInAudience\", but it should by set to \"AzureADMultipleOrgs\"."
-  echo "WARNING: User won't be able to sign in with all types of accounts."
-  echo "WARNING: Please edit it manually in Azure Portal -> App registrations -> $OAUTH_APP_NAME -> Manifest"
-fi
 
 # Print ENV variables
 echo -e "\nDone\n"
