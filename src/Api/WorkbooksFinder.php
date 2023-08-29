@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
+use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Throwable;
 use Iterator;
@@ -125,8 +126,8 @@ class WorkbooksFinder
         // Get URL info and extract driveId, fileId
         try {
             $body = $this->api->get(sprintf('/shares/%s/driveItem', $sharingUrl))->getBody();
-        } catch (RequestException $e) {
-            $error = Helpers::getErrorFromRequestException($e);
+        } catch (RequestException|AccessDeniedException $e) {
+            $error = Helpers::getErrorFromRequestException($e) ?? $e->getMessage();
             switch (true) {
                 // Not exists
                 case $error && strpos($error, 'AccessDenied: The sharing link no longer exists') === 0:

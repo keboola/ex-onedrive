@@ -80,8 +80,10 @@ class Helpers
         if ($error === 'AccessDenied: Could not obtain a WAC access token.') {
             $msg = 'It looks like the specified file is not in the "XLSX" Excel format. Error: "%s"';
             return new InvalidFileTypeException(sprintf($msg, $error), 0, $e);
-        } elseif ($error && strpos($error, 'AccessDenied: Access denied') === 0) {
-            return new AccessDeniedException($error, $e->getCode(), $e);
+        } elseif (($error && strpos($error, 'AccessDenied: Access denied') === 0)
+            || in_array($e->getCode(), [401, 403])
+        ) {
+            return new AccessDeniedException($error ?? $e->getMessage(), $e->getCode(), $e);
         } elseif ($e->getCode() === 404 || ($error && strpos($error, 'ItemNotFound:') === 0)) {
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.ResourceNotFoundException"
             return new ResourceNotFoundException(
