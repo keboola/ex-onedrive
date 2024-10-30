@@ -133,6 +133,7 @@ class FixturesUtils
                     ->getGraph()
                     ->createRequest('PUT', $uploadUrl)
                     ->addHeaders([
+                        'Authorization' => '',
                         'Content-Length' => $end - $start,
                         'Content-Range' => sprintf('bytes %d-%d/%d', $start, $end-1, $fileSize),
                     ])
