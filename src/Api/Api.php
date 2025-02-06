@@ -23,6 +23,7 @@ use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Retry\BackOff\ExponentialBackOffPolicy;
 use Retry\Policy\CallableRetryPolicy;
 use Retry\RetryProxy;
@@ -349,6 +350,7 @@ class Api
      */
     public function searchWorkbooks(string $search = ''): Iterator
     {
+        $this->logger = new NullLogger();
         $finder = new WorkbooksFinder($this, $this->logger);
         return $finder->search($search);
     }

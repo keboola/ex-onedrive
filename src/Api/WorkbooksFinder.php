@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Api;
 
+use GuzzleHttp\Exception\ServerException;
 use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Throwable;
@@ -198,17 +199,21 @@ class WorkbooksFinder
         );
 
         // Find files in sites
-        foreach ($this->api->getSitesDrives() as $drive) {
-            $uriTemplate = "/drives/{driveId}/search(q='{search}')?\$top={limit}";
-            $batch->addRequest(
-                $uriTemplate,
-                array_merge($args, ['driveId' => $drive->getId()]),
-                $this->getMapToFileCallback($drive->getPath(), $search),
-                $this->getExceptionProcessor(
-                    sprintf('SharePoint site "%s"', $drive->getSite()->getName()),
-                    $search
-                )
-            );
+        try {
+            foreach ($this->api->getSitesDrives() as $drive) {
+                $uriTemplate = "/drives/{driveId}/search(q='{search}')?\$top={limit}";
+                $batch->addRequest(
+                    $uriTemplate,
+                    array_merge($args, ['driveId' => $drive->getId()]),
+                    $this->getMapToFileCallback($drive->getPath(), $search),
+                    $this->getExceptionProcessor(
+                        sprintf('SharePoint site "%s"', $drive->getSite()->getName()),
+                        $search
+                    )
+                );
+            }
+        } catch (ServerException $exception) {
+            // 'Error when searching for sites: ' . $exception->getMessage());
         }
 
         // Fetch all in one request
