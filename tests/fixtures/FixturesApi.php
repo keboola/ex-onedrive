@@ -58,7 +58,18 @@ class FixturesApi
                 }
 
                 // Retry if communication problems
-                if (strpos($e->getMessage(), 'There were communication or server problems')) {
+                if (str_contains(
+                    $e->getMessage(),
+                    'There were communication or server problems',
+                )) {
+                    return true;
+                }
+
+                // Retry on possible transient session error
+                if (str_contains(
+                    $e->getMessage(),
+                    'The session specified in the request does not exist or is invalid due to a transient error.',
+                )) {
                     return true;
                 }
             }
