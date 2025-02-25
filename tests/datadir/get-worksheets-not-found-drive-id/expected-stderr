@@ -1,2 +1,2 @@
 API request failed, uri: "%A", response: "%A".
-Not found error. Please check configuration. It can be caused by typo in an ID, or resource doesn't exists.
+Bad request error. Please check configuration. It can be caused by typo in an ID, or resource doesn't exists.
