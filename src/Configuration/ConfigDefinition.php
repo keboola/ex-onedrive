@@ -34,6 +34,9 @@ class ConfigDefinition extends BaseConfigDefinition
                     ->defaultValue(Api::DEFAULT_CELLS_PER_BULK)
                     ->max(5_000_000)
                 ->end()
+                ->booleanNode('errorWhenEmpty')
+                    ->defaultFalse()
+                ->end()
             ->end();
         // @formatter:on
 
