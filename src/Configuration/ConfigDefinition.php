@@ -27,7 +27,7 @@ class ConfigDefinition extends BaseConfigDefinition
                 ->append(WorkbookDefinition::getDefinition())
                 // In one workbook are multiple worksheets, specify one
                 ->append(WorksheetDefinition::getDefinition())
-                ->integerNode('rowsLimit')
+                ->variableNode('rowsLimit')
                     ->defaultNull()
                 ->end()
                 ->integerNode('cellsPerBulk')
