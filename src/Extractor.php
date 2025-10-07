@@ -44,6 +44,8 @@ class Extractor
 
     public function extract(Sheet $sheet): void
     {
+        $errorWhenEmpty = $this->config->shouldErrorWhenEmpty();
+
         try {
             $sessionId = $this->api->getWorkbookSessionId(
                 $sheet->getDriveId(),
@@ -59,7 +61,12 @@ class Extractor
                 $sessionId,
             );
         } catch (SheetEmptyException $e) {
-            $this->logger->warning('Sheet is empty. Nothing was exported.');
+            $message = 'Sheet is empty. Nothing was exported.';
+            if ($errorWhenEmpty) {
+                throw new SheetEmptyException($message, 0, $e);
+            }
+
+            $this->logger->warning($message);
             return;
         }
 

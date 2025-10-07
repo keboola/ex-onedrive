@@ -26,6 +26,7 @@ The configuration `config.json` contains following properties in `parameters` ke
        - UI can use it to store and later show metadata from FilePicker.
 - `rowsLimit` - int (optional): Export only first N rows.
 - `cellsPerBulk` - int (optional) - default `1 000 000`. Maximum number of the cells loaded by the one API request.
+- `errorWhenEmpty` - bool (optional) - default `false`. When enabled, the extraction fails if the selected worksheet contains zero data rows.
 
 **Examples of `config.json`**
 

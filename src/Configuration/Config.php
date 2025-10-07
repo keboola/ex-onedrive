@@ -85,6 +85,11 @@ class Config extends BaseConfig
         return $this->getValue(['parameters', 'cellsPerBulk']);
     }
 
+    public function shouldErrorWhenEmpty(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'errorWhenEmpty']);
+    }
+
 
     public function getOAuthApiData(): array
     {

@@ -27,12 +27,15 @@ class ConfigDefinition extends BaseConfigDefinition
                 ->append(WorkbookDefinition::getDefinition())
                 // In one workbook are multiple worksheets, specify one
                 ->append(WorksheetDefinition::getDefinition())
-                ->integerNode('rowsLimit')
+                ->variableNode('rowsLimit')
                     ->defaultNull()
                 ->end()
                 ->integerNode('cellsPerBulk')
                     ->defaultValue(Api::DEFAULT_CELLS_PER_BULK)
                     ->max(5_000_000)
+                ->end()
+                ->booleanNode('errorWhenEmpty')
+                    ->defaultFalse()
                 ->end()
             ->end();
         // @formatter:on
