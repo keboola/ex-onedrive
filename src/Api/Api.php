@@ -93,14 +93,21 @@ class Api
                 $sessionLocation = current($responseHeader['Location']);
 
                 $status = 'running';
-                while ($status === 'running') {
+                $maxPolls = 15; // Max 30 seconds (15 * 2s)
+                $pollCount = 0;
+                while ($status === 'running' && $pollCount < $maxPolls) {
                     sleep(2);
                     $session = $this->get($sessionLocation)->getBody();
                     $status = $session['status'];
+                    $pollCount++;
                 }
 
                 if ($status !== 'succeeded') {
-                    $this->logger->info('The workbook session could not be created.');
+                    $this->logger->info(sprintf(
+                        'The workbook session could not be created (status: %s, polls: %d).',
+                        $status,
+                        $pollCount
+                    ));
                     return null;
                 }
 
@@ -281,6 +288,31 @@ class Api
 
         // Load headers for worksheets in one request, sort by position
         $worksheets = iterator_to_array($batch->execute());
+        usort($worksheets, fn(Worksheet $a, Worksheet $b) => $a->getPosition() - $b->getPosition());
+        yield from $worksheets;
+    }
+
+    /**
+     * Get worksheets without creating a session or loading headers.
+     * This is optimized for sync actions where we only need the worksheet list.
+     *
+     * @return Iterator|Worksheet[]
+     */
+    public function getWorksheetsLight(string $driveId, string $fileId): Iterator
+    {
+        // Load list of worksheets without session
+        $uri = '/drives/{driveId}/items/{fileId}/workbook/worksheets?$select=id,position,name,visibility';
+        $body = $this
+            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId])
+            ->getBody();
+
+        // Map to worksheet objects without headers
+        $worksheets = [];
+        foreach ($body['value'] as $data) {
+            $worksheets[] = Worksheet::from($data, $driveId, $fileId);
+        }
+
+        // Sort by position
         usort($worksheets, fn(Worksheet $a, Worksheet $b) => $a->getPosition() - $b->getPosition());
         yield from $worksheets;
     }
