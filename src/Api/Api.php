@@ -93,21 +93,14 @@ class Api
                 $sessionLocation = current($responseHeader['Location']);
 
                 $status = 'running';
-                $maxPolls = 15; // Max 30 seconds (15 * 2s)
-                $pollCount = 0;
-                while ($status === 'running' && $pollCount < $maxPolls) {
+                while ($status === 'running') {
                     sleep(2);
                     $session = $this->get($sessionLocation)->getBody();
                     $status = $session['status'];
-                    $pollCount++;
                 }
 
                 if ($status !== 'succeeded') {
-                    $this->logger->info(sprintf(
-                        'The workbook session could not be created (status: %s, polls: %d).',
-                        $status,
-                        $pollCount
-                    ));
+                    $this->logger->info('The workbook session could not be created.');
                     return null;
                 }
 
@@ -254,9 +247,13 @@ class Api
     }
 
     /**
+     * Get worksheets with headers loaded via batch request.
+     * This method creates a workbook session and loads headers for all worksheets.
+     * For sync actions with time constraints, use getWorksheetsLight() instead.
+     *
      * @return Iterator|Worksheet[]
      */
-    public function getWorksheets(string $driveId, string $fileId): Iterator
+    public function getWorksheetsWithHeaders(string $driveId, string $fileId): Iterator
     {
         $sessionId = $this->getWorkbookSessionId($driveId, $fileId);
         $headers = [];
