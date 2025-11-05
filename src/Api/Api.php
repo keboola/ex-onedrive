@@ -315,6 +315,15 @@ class Api
     }
 
     /**
+     * @deprecated Use getWorksheetsWithHeaders() instead.
+     * @return Iterator|Worksheet[]
+     */
+    public function getWorksheets(string $driveId, string $fileId): Iterator
+    {
+        return $this->getWorksheetsWithHeaders($driveId, $fileId);
+    }
+
+    /**
      * @return Iterator|Drive[]
      */
     public function getSitesDrives(): Iterator
