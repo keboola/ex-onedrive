@@ -247,13 +247,9 @@ class Api
     }
 
     /**
-     * Get worksheets with headers loaded via batch request.
-     * This method creates a workbook session and loads headers for all worksheets.
-     * For sync actions with time constraints, use getWorksheetsLight() instead.
-     *
      * @return Iterator|Worksheet[]
      */
-    public function getWorksheetsWithHeaders(string $driveId, string $fileId): Iterator
+    public function getWorksheets(string $driveId, string $fileId): Iterator
     {
         $sessionId = $this->getWorkbookSessionId($driveId, $fileId);
         $headers = [];
@@ -312,15 +308,6 @@ class Api
         // Sort by position
         usort($worksheets, fn(Worksheet $a, Worksheet $b) => $a->getPosition() - $b->getPosition());
         yield from $worksheets;
-    }
-
-    /**
-     * @deprecated Use getWorksheetsWithHeaders() instead.
-     * @return Iterator|Worksheet[]
-     */
-    public function getWorksheets(string $driveId, string $fileId): Iterator
-    {
-        return $this->getWorksheetsWithHeaders($driveId, $fileId);
     }
 
     /**
