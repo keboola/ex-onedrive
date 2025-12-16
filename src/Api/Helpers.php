@@ -8,6 +8,7 @@ use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
+use Keboola\OneDriveExtractor\Exception\InvalidSessionException;
 use Keboola\OneDriveExtractor\Exception\NotSupportedException;
 use Normalizer;
 use GuzzleHttp\Exception\RequestException;
@@ -95,6 +96,14 @@ class Helpers
         } elseif ($error && strpos($error, 'BadRequest: ') === 0) {
             // eg. BadRequest: Tenant does not have a SPO license.
             return new BadRequestException($error, $e->getCode(), $e);
+        } elseif ($error && strpos($error, 'InvalidSession:') === 0) {
+            return new InvalidSessionException(
+                'OneDrive API session expired or is invalid. ' .
+                'The request will be retried automatically. ' .
+                'API error: ' . $error,
+                $e->getCode(),
+                $e
+            );
         } elseif ($e->getCode() === 400) {
             // BadRequest, eg. bad fileId, "-1, Microsoft.SharePoint.Client.InvalidClientQueryException"
             return new BadRequestException(
