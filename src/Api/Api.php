@@ -16,6 +16,7 @@ use Keboola\OneDriveExtractor\Api\Model\TableHeader;
 use Keboola\OneDriveExtractor\Api\Model\TableRange;
 use Keboola\OneDriveExtractor\Api\Model\Worksheet;
 use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
+use Keboola\OneDriveExtractor\Exception\InvalidSessionException;
 use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Keboola\OneDriveExtractor\Exception\SheetEmptyException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedCountException;
@@ -373,9 +374,15 @@ class Api
     public function createRetry(LoggerInterface $logger, int $maxAttempts = self::RETRY_MAX_TRIES): RetryProxy
     {
         $backOffPolicy = new ExponentialBackOffPolicy(1000);
-        $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) {
+        $retryPolicy = new CallableRetryPolicy(function (\Throwable $e) use ($logger) {
             // Always retry on gateway timeout
             if ($e instanceof GatewayTimeoutException) {
+                return true;
+            }
+
+            // Retry on invalid session - Microsoft says this is a transient error
+            if ($e instanceof InvalidSessionException) {
+                $logger->info('Session expired, will retry request.');
                 return true;
             }
 
@@ -389,14 +396,6 @@ class Api
                 if (str_contains(
                     $e->getMessage(),
                     'There were communication or server problems',
-                )) {
-                    return true;
-                }
-
-                // Retry on possible transient session error
-                if (str_contains(
-                    $e->getMessage(),
-                    'The session specified in the request does not exist or is invalid due to a transient error.',
                 )) {
                     return true;
                 }
