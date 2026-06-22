@@ -59,6 +59,7 @@ class Extractor
                 $this->config->getRowsLimit(),
                 $this->config->getCellPerBulk(),
                 $sessionId,
+                $this->config->getRange(),
             );
         } catch (SheetEmptyException $e) {
             $message = 'Sheet is empty. Nothing was exported.';

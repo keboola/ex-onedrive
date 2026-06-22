@@ -19,6 +19,35 @@ class RunConfigTest extends BaseConfigTest
         $this->addToAssertionCount(1); // Assert no error
     }
 
+    public function testRangeAccessors(): void
+    {
+        $configWithRange = new Config(
+            [
+                'authorization' => $this->getValidAuthorization(),
+                'parameters' => [
+                    'workbook' => ['driveId' => 'd', 'fileId' => 'f'],
+                    'worksheet' => ['name' => 'out', 'id' => 'w', 'range' => 'B5:Z1000'],
+                ],
+            ],
+            new ConfigDefinition()
+        );
+        $this->assertTrue($configWithRange->hasRange());
+        $this->assertSame('B5:Z1000', $configWithRange->getRange());
+
+        $configWithoutRange = new Config(
+            [
+                'authorization' => $this->getValidAuthorization(),
+                'parameters' => [
+                    'workbook' => ['driveId' => 'd', 'fileId' => 'f'],
+                    'worksheet' => ['name' => 'out', 'id' => 'w'],
+                ],
+            ],
+            new ConfigDefinition()
+        );
+        $this->assertFalse($configWithoutRange->hasRange());
+        $this->assertNull($configWithoutRange->getRange());
+    }
+
     /**
      * @dataProvider invalidConfigProvider
      */
@@ -110,6 +139,37 @@ class RunConfigTest extends BaseConfigTest
                                 'a' => 1,
                                 'b' => 'abc',
                             ],
+                        ],
+                    ],
+                ],
+            ],
+            'valid-with-range' => [
+                [
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '5678def',
+                        ],
+                        'worksheet' => [
+                            'name' => 'sheet-table',
+                            'id' => '9012xyz',
+                            'range' => 'B5:Z1000',
+                        ],
+                    ],
+                ],
+            ],
+            'valid-without-range' => [
+                [
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '5678def',
+                        ],
+                        'worksheet' => [
+                            'name' => 'sheet-table',
+                            'id' => '9012xyz',
                         ],
                     ],
                 ],

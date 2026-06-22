@@ -21,6 +21,7 @@ use Keboola\OneDriveExtractor\Exception\ResourceNotFoundException;
 use Keboola\OneDriveExtractor\Exception\SheetEmptyException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedCountException;
 use Keboola\OneDriveExtractor\Exception\UnexpectedValueException;
+use Keboola\OneDriveExtractor\Exception\UserException;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Http\GraphResponse;
 use Psr\Log\LoggerInterface;
@@ -146,10 +147,26 @@ class Api
         string $worksheetId,
         ?int $rowsLimit = null,
         int $cellsPerBulk = self::DEFAULT_CELLS_PER_BULK,
-        ?string $sessionId = null
+        ?string $sessionId = null,
+        ?string $range = null
     ): SheetContent {
-        $usedRange = $this->getUsedRange($driveId, $fileId, $worksheetId, $sessionId);
-        $header = $this->getWorksheetHeader($driveId, $fileId, $worksheetId, $sessionId);
+        if ($range !== null) {
+            try {
+                $tableRange = TableRange::from($range);
+            } catch (\InvalidArgumentException $e) {
+                throw new UserException(sprintf(
+                    'Invalid range "%s". Expected A1 notation, e.g. "B5:Z1000".',
+                    $range
+                ), 0, $e);
+            }
+            $this->logger->info(sprintf('Using configured range "%s".', $range));
+            $header = $this->getHeaderForRange($driveId, $fileId, $worksheetId, $tableRange, $sessionId);
+        } else {
+            $tableRange = $this->getUsedRange($driveId, $fileId, $worksheetId, $sessionId);
+            $header = $this->getWorksheetHeader($driveId, $fileId, $worksheetId, $sessionId);
+        }
+
+        $usedRange = $tableRange;
 
         // Is empty?
         if (empty($header->getColumns())) {
@@ -201,6 +218,46 @@ class Api
         $header = TableHeader::from($body['address'], $body['text'][0]);
 
         // Log
+        $this->logger->info(sprintf(
+            'Sheet header (%s:%s): %s',
+            $header->getStartCell(),
+            $header->getEndCell(),
+            Helpers::formatIterable($header->getColumns()),
+        ));
+
+        return $header;
+    }
+
+    private function getHeaderForRange(
+        string $driveId,
+        string $fileId,
+        string $worksheetId,
+        TableRange $range,
+        ?string $sessionId
+    ): TableHeader {
+        $headerAddress = $range->getStart() . $range->getFirstRowNumber()
+            . ':' . $range->getEnd() . $range->getFirstRowNumber();
+
+        $endpoint = '/drives/{driveId}/items/{fileId}/workbook/worksheets/{worksheetId}';
+        $uri = $endpoint . '/range(address=\'{address}\')?$select=address,text';
+        $headers = [];
+        if ($sessionId) {
+            $headers['Workbook-Session-Id'] = $sessionId;
+        }
+        $body = $this
+            ->get(
+                $uri,
+                [
+                    'driveId' => $driveId,
+                    'fileId' => $fileId,
+                    'worksheetId' => $worksheetId,
+                    'address' => $headerAddress,
+                ],
+                $headers
+            )
+            ->getBody();
+        $header = TableHeader::from($body['address'], $body['text'][0]);
+
         $this->logger->info(sprintf(
             'Sheet header (%s:%s): %s',
             $header->getStartCell(),

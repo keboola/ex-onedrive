@@ -24,6 +24,7 @@ The configuration `config.json` contains following properties in `parameters` ke
        - Serves to store human-readable data (eg. sheet name ) when `id` is used to define `worksheet`.
        - The component code is not using content of this metadata.
        - UI can use it to store and later show metadata from FilePicker.
+    - `range` - string (optional): A1-notation cell range to import (e.g. `B5:Z1000`). The first row of the range is treated as the header. When omitted the full auto-detected `usedRange` is used (default behaviour).
 - `rowsLimit` - int (optional): Export only first N rows.
 - `cellsPerBulk` - int (optional) - default `1 000 000`. Maximum number of the cells loaded by the one API request.
 - `errorWhenEmpty` - bool (optional) - default `false`. When enabled, the extraction fails if the selected worksheet contains zero data rows.
@@ -42,6 +43,24 @@ Input sheet configured by IDs.
     "worksheet": {
       "name": "sheet-export",
       "id": "..."
+    }
+  }
+}
+```
+
+Input sheet configured by IDs with a custom cell range.
+```json
+{
+  "authorization": {"oauth_api":  "..."},
+  "parameters": {
+    "workbook": {
+      "driveId": "...",
+      "fileId": "..."
+    },
+    "worksheet": {
+      "name": "sheet-export",
+      "id": "...",
+      "range": "B5:Z1000"
     }
   }
 }

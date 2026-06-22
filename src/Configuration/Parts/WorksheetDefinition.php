@@ -27,6 +27,8 @@ class WorksheetDefinition
                 ->scalarNode('id')->cannotBeEmpty()->end()
                 // ... OR by position, first is 0, hidden sheets are included
                 ->scalarNode('position')->cannotBeEmpty()->end()
+                // optional A1-notation range (e.g. "B5:Z1000"), first row = header
+                ->scalarNode('range')->defaultNull()->end()
                 // optional metadata can be always present, it is not used in code
                 ->arrayNode('metadata')->ignoreExtraKeys(true)->end()
             ->end()
