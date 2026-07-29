@@ -25,7 +25,10 @@ class RefreshTokenProvider implements TokenProvider
 
     // The login endpoint sometimes drops the connection (eg. "cURL error 35 ... reset by peer").
     // Such failures are transient, so the request is retried before the job is failed.
-    private const RETRY_MAX_ATTEMPTS = 5; // includes the initial try
+    // The token is refreshed from the Component constructor, so this runs for sync actions too.
+    // The ceiling is therefore kept at the value the sync actions already use for the API calls
+    // (see Component::__construct) => at most 1s + 2s of waiting before the job fails.
+    private const RETRY_MAX_ATTEMPTS = 3; // includes the initial try
     private const RETRY_INITIAL_INTERVAL = 1000; // ms, doubled on each attempt
     private const RETRY_EXCEPTIONS = [ConnectException::class];
 
@@ -107,6 +110,13 @@ class RefreshTokenProvider implements TokenProvider
      * An invalid/expired token still fails on the first try (IdentityProviderException is not
      * retried) and a persistent connection problem is re-thrown after the last attempt,
      * so a failing refresh keeps failing the job.
+     *
+     * Only ConnectException is retried, on purpose. It means the connection was never
+     * established, so the request provably never reached the server and it is safe to send
+     * again. Please do not extend the list with RequestException: a request that failed while
+     * the response was already in flight may have been processed, and because Microsoft rotates
+     * refresh tokens, replaying it would come back as "invalid_grant" and the user would be
+     * told to reset an authorization which is in fact still valid.
      */
     private function refreshToken(GenericProvider $provider, array $options): AccessTokenInterface
     {

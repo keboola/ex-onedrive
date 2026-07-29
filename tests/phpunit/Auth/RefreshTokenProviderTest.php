@@ -27,7 +27,7 @@ class RefreshTokenProviderTest extends TestCase
         APP_ID = 'app-id',
         APP_SECRET = 'app-secret',
         // RefreshTokenProvider::RETRY_MAX_ATTEMPTS, including the initial try
-        MAX_ATTEMPTS = 5;
+        MAX_ATTEMPTS = 3;
 
     public function testConnectionErrorIsRetried(): void
     {
