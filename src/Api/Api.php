@@ -6,6 +6,7 @@ namespace Keboola\OneDriveExtractor\Api;
 
 use ArrayIterator;
 use GuzzleHttp\Exception\RequestException;
+use InvalidArgumentException;
 use Iterator;
 use Keboola\OneDriveExtractor\Api\Batch\BatchRequest;
 use Keboola\OneDriveExtractor\Api\Model\Drive;
@@ -151,22 +152,40 @@ class Api
         ?string $range = null
     ): SheetContent {
         if ($range !== null) {
+            // Normally the range is already validated by the configuration definition,
+            // this is a guard for the other callers of this public method.
             try {
-                $tableRange = TableRange::from($range);
-            } catch (\InvalidArgumentException $e) {
-                throw new UserException(sprintf(
-                    'Invalid range "%s". Expected A1 notation, e.g. "B5:Z1000".',
-                    $range
-                ), 0, $e);
+                $configuredRange = TableRange::fromUserInput($range);
+            } catch (InvalidArgumentException $e) {
+                throw new UserException($e->getMessage(), 0, $e);
             }
-            $this->logger->info(sprintf('Using configured range "%s".', $range));
-            $header = $this->getHeaderForRange($driveId, $fileId, $worksheetId, $tableRange, $sessionId);
+
+            // The configured range is clipped to the used range of the sheet,
+            // so an intentionally generous range (eg. "B5:Z100000") does not
+            // export thousands of empty rows / columns.
+            $sheetRange = $this->getUsedRange($driveId, $fileId, $worksheetId, $sessionId);
+            $clippedRange = $configuredRange->intersect($sheetRange);
+            if ($clippedRange === null) {
+                $this->logger->warning(sprintf(
+                    'Configured range "%s" does not overlap the data in the sheet ("%s").',
+                    $configuredRange->getAddress(),
+                    $sheetRange->getAddress()
+                ));
+                throw new SheetEmptyException('Spreadsheet is empty.');
+            }
+
+            $this->logger->info(sprintf(
+                'Configured range "%s", used range "%s".',
+                $configuredRange->getAddress(),
+                $clippedRange->getAddress()
+            ));
+
+            $usedRange = $clippedRange;
+            $header = $this->getHeaderForRange($driveId, $fileId, $worksheetId, $usedRange, $sessionId);
         } else {
-            $tableRange = $this->getUsedRange($driveId, $fileId, $worksheetId, $sessionId);
+            $usedRange = $this->getUsedRange($driveId, $fileId, $worksheetId, $sessionId);
             $header = $this->getWorksheetHeader($driveId, $fileId, $worksheetId, $sessionId);
         }
-
-        $usedRange = $tableRange;
 
         // Is empty?
         if (empty($header->getColumns())) {

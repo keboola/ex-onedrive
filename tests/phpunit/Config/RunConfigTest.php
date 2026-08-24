@@ -19,33 +19,40 @@ class RunConfigTest extends BaseConfigTest
         $this->addToAssertionCount(1); // Assert no error
     }
 
-    public function testRangeAccessors(): void
+    /**
+     * @dataProvider rangeNormalizationProvider
+     */
+    public function testRangeIsNormalized(?string $configured, ?string $expected): void
     {
-        $configWithRange = new Config(
-            [
-                'authorization' => $this->getValidAuthorization(),
-                'parameters' => [
-                    'workbook' => ['driveId' => 'd', 'fileId' => 'f'],
-                    'worksheet' => ['name' => 'out', 'id' => 'w', 'range' => 'B5:Z1000'],
-                ],
-            ],
-            new ConfigDefinition()
-        );
-        $this->assertTrue($configWithRange->hasRange());
-        $this->assertSame('B5:Z1000', $configWithRange->getRange());
+        $worksheet = ['name' => 'sheet-table', 'id' => '9012xyz'];
+        if ($configured !== null) {
+            $worksheet['range'] = $configured;
+        }
 
-        $configWithoutRange = new Config(
+        $config = new Config(
             [
                 'authorization' => $this->getValidAuthorization(),
                 'parameters' => [
-                    'workbook' => ['driveId' => 'd', 'fileId' => 'f'],
-                    'worksheet' => ['name' => 'out', 'id' => 'w'],
+                    'workbook' => ['driveId' => '1234abc', 'fileId' => '5678def'],
+                    'worksheet' => $worksheet,
                 ],
             ],
             new ConfigDefinition()
         );
-        $this->assertFalse($configWithoutRange->hasRange());
-        $this->assertNull($configWithoutRange->getRange());
+
+        $this->assertSame($expected, $config->getRange());
+    }
+
+    public function rangeNormalizationProvider(): iterable
+    {
+        yield 'not-set' => [null, null];
+        yield 'empty-string' => ['', null];
+        yield 'whitespace-only' => ['   ', null];
+        yield 'plain' => ['B5:Z1000', 'B5:Z1000'];
+        yield 'lowercase' => ['b5:z1000', 'B5:Z1000'];
+        yield 'padded' => [' B5:Z1000 ', 'B5:Z1000'];
+        yield 'single-cell' => ['C9', 'C9:C9'];
+        yield 'reversed' => ['Z1000:B5', 'B5:Z1000'];
     }
 
     /**
@@ -281,6 +288,57 @@ class RunConfigTest extends BaseConfigTest
                         'worksheet' => [
                             'name' => 'sheet-table',
                             'position' => 0,
+                        ],
+                    ],
+                ],
+            ],
+            'invalid-range' => [
+                'Invalid range "GARBAGE". Expected A1 notation with both ends bounded, eg. "B5:Z1000".',
+                [
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '4567def',
+                        ],
+                        'worksheet' => [
+                            'name' => 'sheet-table',
+                            'id' => '901xyz',
+                            'range' => 'GARBAGE',
+                        ],
+                    ],
+                ],
+            ],
+            'invalid-range-unbounded' => [
+                'Invalid range "B5:Z". Expected A1 notation with both ends bounded, eg. "B5:Z1000".',
+                [
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '4567def',
+                        ],
+                        'worksheet' => [
+                            'name' => 'sheet-table',
+                            'id' => '901xyz',
+                            'range' => 'B5:Z',
+                        ],
+                    ],
+                ],
+            ],
+            'invalid-range-with-sheet-name' => [
+                'The range must not contain a sheet name',
+                [
+                    'authorization' => $this->getValidAuthorization(),
+                    'parameters' => [
+                        'workbook' => [
+                            'driveId' => '1234abc',
+                            'fileId' => '4567def',
+                        ],
+                        'worksheet' => [
+                            'name' => 'sheet-table',
+                            'id' => '901xyz',
+                            'range' => 'Sheet1!B5:Z1000',
                         ],
                     ],
                 ],

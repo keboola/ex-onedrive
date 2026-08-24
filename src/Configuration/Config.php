@@ -75,11 +75,6 @@ class Config extends BaseConfig
         return $this->getValue(['parameters', 'worksheet', 'name']);
     }
 
-    public function hasRange(): bool
-    {
-        return $this->getRange() !== null;
-    }
-
     public function getRange(): ?string
     {
         return $this->getValue(['parameters', 'worksheet', 'range']);
