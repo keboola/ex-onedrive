@@ -40,6 +40,33 @@ class TableRangeTest extends TestCase
     }
 
     /**
+     * @dataProvider getUserInputValid
+     */
+    public function testFromUserInputSuccess(string $input, string $expectedAddress): void
+    {
+        Assert::assertSame($expectedAddress, TableRange::fromUserInput($input)->getAddress());
+    }
+
+    /**
+     * @dataProvider getUserInputInvalid
+     */
+    public function testFromUserInputFail(string $input, string $expectedMessage): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($expectedMessage);
+        TableRange::fromUserInput($input);
+    }
+
+    /**
+     * @dataProvider getIntersectData
+     */
+    public function testIntersect(string $a, string $b, ?string $expected): void
+    {
+        $result = TableRange::from($a)->intersect(TableRange::from($b));
+        Assert::assertSame($expected, $result ? $result->getAddress() : null);
+    }
+
+    /**
      * @dataProvider getSplitData
      */
     public function testSplit(string $input, int $cellsPerBulk, ?int $limitRows, array $expected): void
@@ -96,6 +123,59 @@ class TableRangeTest extends TestCase
             [''],
             ['abc'],
         ];
+    }
+
+    public function getUserInputValid(): iterable
+    {
+        yield 'simple' => ['B5:Z1000', 'B5:Z1000'];
+        yield 'single-cell' => ['A10', 'A10:A10'];
+        yield 'lowercase' => ['b5:z1000', 'B5:Z1000'];
+        yield 'whitespace' => ["  B5:Z1000\n", 'B5:Z1000'];
+        yield 'multi-letter-column' => ['AA5:AB10', 'AA5:AB10'];
+        yield 'reversed-columns' => ['Z5:B1000', 'B5:Z1000'];
+        yield 'reversed-rows' => ['B1000:Z5', 'B5:Z1000'];
+        yield 'last-cell-of-sheet' => ['A1:XFD1048576', 'A1:XFD1048576'];
+    }
+
+    public function getUserInputInvalid(): iterable
+    {
+        yield 'empty' => ['', 'Range cannot be empty.'];
+        yield 'whitespace-only' => ['   ', 'Range cannot be empty.'];
+        yield 'garbage' => ['foo bar', 'Invalid range "foo bar". Expected A1 notation with both ends bounded'];
+        // Would be silently accepted by TableRange::from(), which is why fromUserInput() exists
+        yield 'letters-only' => ['GARBAGE', 'Invalid range "GARBAGE". Expected A1 notation with both ends bounded'];
+        yield 'whole-columns' => ['B:Z', 'Invalid range "B:Z". Expected A1 notation with both ends bounded'];
+        yield 'unbounded-end' => ['B5:Z', 'Invalid range "B5:Z". Expected A1 notation with both ends bounded'];
+        yield 'unbounded-start' => ['B:Z1000', 'Invalid range "B:Z1000". Expected A1 notation with both ends bounded'];
+        yield 'zero-row' => ['A0:B5', 'Invalid range "A0:B5". Expected A1 notation with both ends bounded'];
+        yield 'row-only' => ['5:1000', 'Invalid range "5:1000". Expected A1 notation with both ends bounded'];
+        yield 'three-part' => ['A1:B2:C3', 'Invalid range "A1:B2:C3". Expected A1 notation with both ends bounded'];
+        yield 'sheet-prefix' => [
+            'Sheet1!B5:Z1000',
+            'Invalid range "Sheet1!B5:Z1000". The range must not contain a sheet name',
+        ];
+        yield 'column-out-of-sheet' => [
+            'A1:XFE10',
+            'Invalid range "A1:XFE10". Column "XFE" is out of the worksheet, the last column is "XFD".',
+        ];
+        yield 'row-out-of-sheet' => [
+            'A1:B1048577',
+            'Invalid range "A1:B1048577". Row 1048577 is out of the worksheet, the last row is 1048576.',
+        ];
+    }
+
+    public function getIntersectData(): iterable
+    {
+        yield 'identical' => ['C9:L14', 'C9:L14', 'C9:L14'];
+        yield 'inside' => ['E9:J14', 'C9:L14', 'E9:J14'];
+        yield 'outside-is-clipped' => ['A1:Z1000', 'C9:L14', 'C9:L14'];
+        yield 'generous-rows' => ['C9:L100000', 'C9:L14', 'C9:L14'];
+        yield 'generous-columns' => ['A9:ZZ14', 'C9:L14', 'C9:L14'];
+        yield 'partial-overlap' => ['A1:E10', 'C9:L14', 'C9:E10'];
+        yield 'commutative' => ['C9:L14', 'A1:Z1000', 'C9:L14'];
+        yield 'no-row-overlap' => ['C20:L30', 'C9:L14', null];
+        yield 'no-column-overlap' => ['A9:B14', 'C9:L14', null];
+        yield 'single-cell' => ['D10:D10', 'C9:L14', 'D10:D10'];
     }
 
     public function getSplitData(): iterable

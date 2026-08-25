@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Configuration\Parts;
 
+use Closure;
+use InvalidArgumentException;
+use Keboola\OneDriveExtractor\Api\Model\TableRange;
 use Keboola\OneDriveExtractor\Exception\InvalidConfigException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -27,6 +30,15 @@ class WorksheetDefinition
                 ->scalarNode('id')->cannotBeEmpty()->end()
                 // ... OR by position, first is 0, hidden sheets are included
                 ->scalarNode('position')->cannotBeEmpty()->end()
+                // optional A1-notation range (eg. "B5:Z1000"), first row of the range = header
+                // An empty value means "whole sheet", so the UI can always send the key.
+                // The value is normalized (uppercase, trimmed) or rejected with a user error.
+                ->scalarNode('range')
+                    ->defaultNull()
+                    ->validate()
+                        ->always(Closure::fromCallable([self::class, 'normalizeRange']))
+                    ->end()
+                ->end()
                 // optional metadata can be always present, it is not used in code
                 ->arrayNode('metadata')->ignoreExtraKeys(true)->end()
             ->end()
@@ -51,5 +63,34 @@ class WorksheetDefinition
         // @formatter:on
 
         return $root;
+    }
+
+    /**
+     * Validates and normalizes the user-supplied "worksheet.range" value.
+     *
+     * An empty value means "whole sheet", so the UI can always send the key.
+     *
+     * Public because it is referenced as a callable, see getDefinition().
+     *
+     * @param mixed $range
+     */
+    public static function normalizeRange($range): ?string
+    {
+        if ($range === null) {
+            return null;
+        }
+
+        if (!is_string($range)) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid range, expected a string, given "%s".',
+                gettype($range)
+            ));
+        }
+
+        if (trim($range) === '') {
+            return null;
+        }
+
+        return TableRange::fromUserInput($range)->getAddress();
     }
 }
