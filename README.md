@@ -24,6 +24,17 @@ The configuration `config.json` contains following properties in `parameters` ke
        - Serves to store human-readable data (eg. sheet name ) when `id` is used to define `worksheet`.
        - The component code is not using content of this metadata.
        - UI can use it to store and later show metadata from FilePicker.
+    - `range` - string (optional): A1 notation cell range to import, eg. `B5:Z1000`.
+        - The first row of the range is used as the header, everything outside the range is ignored.
+        - Useful to skip summary rows above / label columns left of the actual table.
+        - Empty or missing value = whole sheet, the auto-detected `usedRange` is used (default behaviour).
+        - The range is clipped to the `usedRange` of the sheet, so a deliberately generous range
+          (eg. `B5:Z100000`) does not export thousands of empty rows and columns.
+        - The value is normalized: it is trimmed and uppercased, and `Z10:B5` is read as `B5:Z10` (same as Excel).
+        - Both ends must be bounded, so `B:Z` or `B5:Z` is rejected. The range must not contain a sheet name
+          (eg. `Sheet1!B5:Z1000`), the worksheet is already selected by `worksheet.id` / `worksheet.position`.
+        - Only one contiguous rectangle can be selected. To drop a column *inside* the table use
+          the [select-columns](https://github.com/keboola/processor-select-columns) processor.
 - `rowsLimit` - int (optional): Export only first N rows.
 - `cellsPerBulk` - int (optional) - default `1 000 000`. Maximum number of the cells loaded by the one API request.
 - `errorWhenEmpty` - bool (optional) - default `false`. When enabled, the extraction fails if the selected worksheet contains zero data rows.
@@ -42,6 +53,24 @@ Input sheet configured by IDs.
     "worksheet": {
       "name": "sheet-export",
       "id": "..."
+    }
+  }
+}
+```
+
+Input sheet configured by IDs with a custom cell range.
+```json
+{
+  "authorization": {"oauth_api":  "..."},
+  "parameters": {
+    "workbook": {
+      "driveId": "...",
+      "fileId": "..."
+    },
+    "worksheet": {
+      "name": "sheet-export",
+      "id": "...",
+      "range": "B5:Z1000"
     }
   }
 }
