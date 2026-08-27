@@ -553,11 +553,18 @@ class Api
         array $body = [],
         array $headers = []
     ): GraphResponse {
-        return $this
-            ->createRetry($this->logger, $this->maxAttempts)
-            ->call(function () use ($method, $uri, $params, $body, $headers) {
-                return $this->execute($method, $uri, $params, $body, $headers);
-            });
+        try {
+            return $this
+                ->createRetry($this->logger, $this->maxAttempts)
+                ->call(function () use ($method, $uri, $params, $body, $headers) {
+                    return $this->execute($method, $uri, $params, $body, $headers);
+                });
+        } catch (RequestException $e) {
+            // All retries have been exhausted and the request still fails with a raw HTTP error.
+            // Convert transient / server-side errors (eg. 429 Too Many Requests, 5xx) into a clear
+            // user error instead of letting them bubble up as an unhandled application (critical) error.
+            throw Helpers::processRetryFailedException($e);
+        }
     }
 
     private function execute(

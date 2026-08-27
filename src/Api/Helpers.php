@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OneDriveExtractor\Api;
 
 use Keboola\OneDriveExtractor\Exception\AccessDeniedException;
+use Keboola\OneDriveExtractor\Exception\ApiServerException;
 use Keboola\OneDriveExtractor\Exception\BadRequestException;
 use Keboola\OneDriveExtractor\Exception\BatchRequestException;
 use Keboola\OneDriveExtractor\Exception\GatewayTimeoutException;
@@ -123,6 +124,42 @@ class Helpers
             return new GatewayTimeoutException(
                 'Gateway Timeout Error. The Microsoft OneDrive API has some problems. ' .
                 'Please try again later.',
+                $e->getCode(),
+                $e
+            );
+        }
+
+        return $e;
+    }
+
+    /**
+     * Converts an HTTP error that survived all retries into a clear user error.
+     * Retryable transient / server-side errors (see Api::RETRY_HTTP_CODES, eg.
+     * 429 Too Many Requests, 5xx) are retried by the client. When such an error
+     * is still present after all retries have been exhausted, it is a temporary
+     * problem on the Microsoft side, not an error in the component. Without this
+     * conversion the raw HTTP RequestException bubbles up as an unhandled
+     * application (critical) error; this maps it to a user error with an
+     * actionable message instead. Exceptions already converted by
+     * processRequestException() (eg. AccessDeniedException, GatewayTimeoutException)
+     * are not RequestException instances and are returned unchanged.
+     */
+    public static function processRetryFailedException(Throwable $e): Throwable
+    {
+        if (!$e instanceof RequestException) {
+            return $e;
+        }
+
+        if (in_array($e->getCode(), Api::RETRY_HTTP_CODES, true)) {
+            $error = self::getErrorFromRequestException($e);
+            return new ApiServerException(
+                sprintf(
+                    'The Microsoft OneDrive API did not respond successfully (HTTP %d) even after ' .
+                    'several retries. This is usually a temporary problem on the Microsoft side ' .
+                    '(a server error or request throttling). Please try again later.%s',
+                    $e->getCode(),
+                    $error ? ' API error: "' . $error . '".' : ''
+                ),
                 $e->getCode(),
                 $e
             );
