@@ -14,10 +14,13 @@ class TokenProviderFactory
 
     private ArrayObject $stateObject;
 
-    public function __construct(Config $config, ArrayObject $stateObject)
+    private ?LoggerInterface $logger;
+
+    public function __construct(Config $config, ArrayObject $stateObject, ?LoggerInterface $logger = null)
     {
         $this->config = $config;
         $this->stateObject = $stateObject;
+        $this->logger = $logger;
     }
 
     public function create(): TokenProvider
@@ -27,7 +30,8 @@ class TokenProviderFactory
         return new RefreshTokenProvider(
             $this->config->getOAuthApiAppKey(),
             $this->config->getOAuthApiAppSecret(),
-            $tokenDataManager
+            $tokenDataManager,
+            $this->logger
         );
     }
 }

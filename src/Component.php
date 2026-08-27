@@ -34,7 +34,7 @@ class Component extends BaseComponent
         $config = $this->getConfig();
         $this->stateObject = new ArrayObject($this->getInputState());
 
-        $tokenProviderFactory = new TokenProviderFactory($config, $this->stateObject);
+        $tokenProviderFactory = new TokenProviderFactory($config, $this->stateObject, $logger);
         $tokenProvider = $tokenProviderFactory->create();
         $apiFactory = new ApiFactory($logger, $tokenProvider);
         $maxAttempts = $this->isSyncAction() ? 3 : Api::RETRY_MAX_TRIES;
