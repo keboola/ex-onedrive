@@ -82,7 +82,9 @@ class Component extends BaseComponent
     protected function handleGetWorksheetsSyncAction(): array
     {
         $workbook = $this->sheetProvider->getFile();
-        $worksheets = iterator_to_array($this->api->getWorksheets($workbook->getDriveId(), $workbook->getFileId()));
+        $worksheets = iterator_to_array(
+            $this->api->getWorksheetsLight($workbook->getDriveId(), $workbook->getFileId())
+        );
         return [
             'worksheets' => $worksheets,
         ];

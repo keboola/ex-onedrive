@@ -68,7 +68,7 @@ class BatchRequest
                         } while ($response !== null);
                     }
                 } catch (BatchRequestException $e) {
-                    Helpers::processRequestException($e);
+                    throw Helpers::processRequestException($e);
                 }
             });
         }
