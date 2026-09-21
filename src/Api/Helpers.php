@@ -156,6 +156,62 @@ class Helpers
         }
     }
 
+    /**
+     * Extracts "driveItem" resources from a Microsoft Graph Search API response.
+     *
+     * The response is nested: value[].hitsContainers[].hits[].resource
+     * See: https://learn.microsoft.com/en-us/graph/api/search-query
+     *
+     * Every level is checked, because the shape depends on the entity type
+     * and on the permissions of the signed-in user.
+     *
+     * @return array<int, array> list of driveItem resources
+     */
+    public static function extractDriveItemsFromSearchResponse(array $body): array
+    {
+        $items = [];
+
+        $searchResponses = $body['value'] ?? null;
+        if (!is_array($searchResponses)) {
+            return $items;
+        }
+
+        foreach ($searchResponses as $searchResponse) {
+            $containers = is_array($searchResponse) ? ($searchResponse['hitsContainers'] ?? null) : null;
+            if (!is_array($containers)) {
+                continue;
+            }
+
+            foreach ($containers as $container) {
+                $hits = is_array($container) ? ($container['hits'] ?? null) : null;
+                if (!is_array($hits)) {
+                    continue;
+                }
+
+                foreach ($hits as $hit) {
+                    $resource = is_array($hit) ? ($hit['resource'] ?? null) : null;
+                    if (is_array($resource)) {
+                        $items[] = $resource;
+                    }
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Converts a user search string to a KQL query string for the Graph Search API.
+     *
+     * The string is used as a quoted phrase, so characters with a special meaning
+     * in KQL (eg. ":" or "AND") cannot change the query.
+     * KQL syntax: https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql
+     */
+    public static function toKqlPhrase(string $str): string
+    {
+        return '"' . str_replace('"', ' ', $str) . '"';
+    }
+
     public static function replaceParamsInUri(string $uri, array $params): string
     {
         // Replace params

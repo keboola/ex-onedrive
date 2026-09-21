@@ -442,9 +442,14 @@ class Api
         return $this->executeWithRetry('GET', $uri, $params, [], $headers);
     }
 
-    public function post(string $uri, array $params = [], array $body = [], array $headers = []): GraphResponse
-    {
-        return $this->executeWithRetry('POST', $uri, $params, $body, $headers);
+    public function post(
+        string $uri,
+        array $params = [],
+        array $body = [],
+        array $headers = [],
+        ?int $maxAttempts = null
+    ): GraphResponse {
+        return $this->executeWithRetry('POST', $uri, $params, $body, $headers, $maxAttempts);
     }
 
     public function createRetry(LoggerInterface $logger, int $maxAttempts = self::RETRY_MAX_TRIES): RetryProxy
@@ -551,10 +556,11 @@ class Api
         string $uri,
         array $params = [],
         array $body = [],
-        array $headers = []
+        array $headers = [],
+        ?int $maxAttempts = null
     ): GraphResponse {
         return $this
-            ->createRetry($this->logger, $this->maxAttempts)
+            ->createRetry($this->logger, $maxAttempts ?? $this->maxAttempts)
             ->call(function () use ($method, $uri, $params, $body, $headers) {
                 return $this->execute($method, $uri, $params, $body, $headers);
             });
