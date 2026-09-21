@@ -112,6 +112,15 @@ Read more about actions [in KBC documentation](https://developers.keboola.com/ex
         - personal OneDrive 
         - all shared files
         - all SharePoint sites
+    - Shared files come from the
+      [`sharedWithMe` endpoint](https://learn.microsoft.com/en-us/graph/api/drive-sharedwithme).
+      Microsoft deprecated it. It operates in a degraded state and stops returning data in November 2026.
+    - If the three sources above find no file, the search is repeated with the
+      [Graph Search API](https://learn.microsoft.com/en-us/graph/api/search-query),
+      which also finds files that are shared with the user.
+      This second step runs only when the first step finds nothing, so it cannot change
+      the result of a configuration that works now.
+      The Graph Search API is not supported for personal Microsoft accounts.
   - **`https://...`**
     - The file is searched by sharing link obtained from OneDrive.
     - The copied URL of an open OneDrive Excel file in should also work.
