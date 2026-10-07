@@ -116,7 +116,7 @@ class FixturesApi
                 'refresh_token' => $refreshToken,
             ];
         $dataManager = new TokenDataManager($oauthData, new ArrayObject());
-        $tokenProvider = new RefreshTokenProvider($appId, $appSecret, $dataManager);
+        $tokenProvider = new RefreshTokenProvider($appId, $appSecret, null, $dataManager);
         $apiFactory = new GraphApiFactory();
         return $apiFactory->create($tokenProvider->get());
     }

@@ -40,14 +40,30 @@ class RefreshTokenProvider implements TokenProvider
 
     private LoggerInterface $logger;
 
+    /**
+     * Microsoft identity platform authority, without the endpoint path.
+     *
+     * Microsoft rejects the shared "/common" authority for single tenant app
+     * registrations (AADSTS50194), so a stack with such a registration must call its
+     * own tenant. The stack sets the tenant authority in the optional image parameter
+     * "oneDriveAuthorityUrl". When the parameter is not set, "/common" is used and the
+     * behaviour is unchanged.
+     */
+    private string $authorityUrl;
+
     public function __construct(
         string $appId,
         string $appSecret,
+        ?string $authorityUrl,
         TokenDataManager $dataManager,
         ?LoggerInterface $logger = null
     ) {
         $this->appId = $appId;
         $this->appSecret = $appSecret;
+        $this->authorityUrl = self::AUTHORITY_URL;
+        if ($authorityUrl !== null && $authorityUrl !== '') {
+            $this->authorityUrl = rtrim($authorityUrl, '/');
+        }
         $this->dataManager = $dataManager;
         $this->logger = $logger ?? new NullLogger();
     }
@@ -89,8 +105,8 @@ class RefreshTokenProvider implements TokenProvider
         return new GenericProvider([
             'clientId' => $appId,
             'clientSecret' => $appSecret,
-            'urlAuthorize' => self::AUTHORITY_URL . self::AUTHORIZE_ENDPOINT,
-            'urlAccessToken' => self::AUTHORITY_URL . self::TOKEN_ENDPOINT,
+            'urlAuthorize' => $this->authorityUrl . self::AUTHORIZE_ENDPOINT,
+            'urlAccessToken' => $this->authorityUrl . self::TOKEN_ENDPOINT,
             'urlResourceOwnerDetails' => '',
             'scopes' => implode(' ', self::SCOPES),
         ]);
