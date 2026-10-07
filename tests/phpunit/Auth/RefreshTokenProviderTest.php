@@ -26,6 +26,7 @@ class RefreshTokenProviderTest extends TestCase
     private const
         APP_ID = 'app-id',
         APP_SECRET = 'app-secret',
+        TENANT_ID = '11111111-2222-3333-4444-555555555555',
         // RefreshTokenProvider::RETRY_MAX_ATTEMPTS, including the initial try
         MAX_ATTEMPTS = 3;
 
@@ -82,6 +83,82 @@ class RefreshTokenProviderTest extends TestCase
         }
     }
 
+    public function testDefaultAuthorityUrlIsUsedWhenImageParameterIsNotSet(): void
+    {
+        // Behaviour on a stack without the override must not change
+        $provider = $this->createOAuthProvider(null);
+
+        Assert::assertSame(
+            'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+            $provider->getBaseAuthorizationUrl()
+        );
+        Assert::assertSame(
+            'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+            $provider->getBaseAccessTokenUrl([])
+        );
+    }
+
+    public function testEmptyAuthorityUrlFallsBackToDefault(): void
+    {
+        $provider = $this->createOAuthProvider('');
+
+        Assert::assertSame(
+            'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+            $provider->getBaseAccessTokenUrl([])
+        );
+    }
+
+    /**
+     * A single tenant app registration is rejected on the shared "/common" authority
+     * (AADSTS50194), so the stack can point the component at its own tenant.
+     *
+     * @dataProvider authorityUrlProvider
+     */
+    public function testAuthorityUrlFromImageParametersIsUsed(string $authorityUrl): void
+    {
+        $provider = $this->createOAuthProvider($authorityUrl);
+
+        Assert::assertSame(
+            'https://login.microsoftonline.com/' . self::TENANT_ID . '/oauth2/v2.0/authorize',
+            $provider->getBaseAuthorizationUrl()
+        );
+        Assert::assertSame(
+            'https://login.microsoftonline.com/' . self::TENANT_ID . '/oauth2/v2.0/token',
+            $provider->getBaseAccessTokenUrl([])
+        );
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public function authorityUrlProvider(): array
+    {
+        return [
+            'no trailing slash' => ['https://login.microsoftonline.com/' . self::TENANT_ID],
+            'trailing slash' => ['https://login.microsoftonline.com/' . self::TENANT_ID . '/'],
+        ];
+    }
+
+    private function createOAuthProvider(?string $authorityUrl): GenericProvider
+    {
+        $dataManager = new TokenDataManager(
+            ['access_token' => 'old-access-token', 'refresh_token' => 'old-refresh-token'],
+            new ArrayObject()
+        );
+
+        $appId = self::APP_ID;
+        $appSecret = self::APP_SECRET;
+
+        $provider = new class ($appId, $appSecret, $authorityUrl, $dataManager) extends RefreshTokenProvider {
+            public function exposeOAuthProvider(string $appId, string $appSecret): GenericProvider
+            {
+                return $this->createOAuthProvider($appId, $appSecret);
+            }
+        };
+
+        return $provider->exposeOAuthProvider($appId, $appSecret);
+    }
+
     private function createProvider(MockHandler $handler, ArrayObject $state): RefreshTokenProvider
     {
         $dataManager = new TokenDataManager(
@@ -99,7 +176,7 @@ class RefreshTokenProviderTest extends TestCase
                 TokenDataManager $dataManager,
                 ClientInterface $httpClient
             ) {
-                parent::__construct($appId, $appSecret, $dataManager);
+                parent::__construct($appId, $appSecret, null, $dataManager);
                 $this->httpClient = $httpClient;
             }
 
