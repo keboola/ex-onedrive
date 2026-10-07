@@ -31,7 +31,8 @@ class TokenProviderFactory
             $this->config->getOAuthApiAppKey(),
             $this->config->getOAuthApiAppSecret(),
             $tokenDataManager,
-            $this->logger
+            $this->logger,
+            $this->config->getImageParameters()['oneDriveAuthorityUrl'] ?? null
         );
     }
 }

@@ -10,6 +10,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\OneDriveExtractor\Auth\RefreshTokenProvider;
@@ -82,24 +83,66 @@ class RefreshTokenProviderTest extends TestCase
         }
     }
 
-    private function createProvider(MockHandler $handler, ArrayObject $state): RefreshTokenProvider
+    public function testDefaultAuthorityUrl(): void
     {
+        $history = [];
+        $handler = new MockHandler([self::createTokenResponse()]);
+        $this->createProvider($handler, new ArrayObject(), null, $history)->get();
+
+        Assert::assertCount(1, $history);
+        Assert::assertSame(
+            'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+            (string) $history[0]['request']->getUri()
+        );
+    }
+
+    public function testCustomAuthorityUrl(): void
+    {
+        $history = [];
+        $handler = new MockHandler([self::createTokenResponse()]);
+        $authorityUrl = 'https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000';
+        $this->createProvider($handler, new ArrayObject(), $authorityUrl, $history)->get();
+
+        Assert::assertCount(1, $history);
+        Assert::assertSame(
+            $authorityUrl . '/oauth2/v2.0/token',
+            (string) $history[0]['request']->getUri()
+        );
+    }
+
+    private function createProvider(
+        MockHandler $handler,
+        ArrayObject $state,
+        ?string $authorityUrl = null,
+        ?array &$history = null
+    ): RefreshTokenProvider {
         $dataManager = new TokenDataManager(
             ['access_token' => 'old-access-token', 'refresh_token' => 'old-refresh-token'],
             $state
         );
-        $httpClient = new Client(['handler' => HandlerStack::create($handler)]);
+        $stack = HandlerStack::create($handler);
+        if ($history !== null) {
+            $stack->push(Middleware::history($history));
+        }
+        $httpClient = new Client(['handler' => $stack]);
 
-        return new class (self::APP_ID, self::APP_SECRET, $dataManager, $httpClient) extends RefreshTokenProvider {
+        return new class (
+            self::APP_ID,
+            self::APP_SECRET,
+            $dataManager,
+            $httpClient,
+            $authorityUrl
+        ) extends RefreshTokenProvider {
             private ClientInterface $httpClient;
 
             public function __construct(
                 string $appId,
                 string $appSecret,
                 TokenDataManager $dataManager,
-                ClientInterface $httpClient
+                ClientInterface $httpClient,
+                ?string $authorityUrl
             ) {
-                parent::__construct($appId, $appSecret, $dataManager);
+                parent::__construct($appId, $appSecret, $dataManager, null, $authorityUrl);
                 $this->httpClient = $httpClient;
             }
 
