@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\OneDriveExtractor\Tests;
 
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use Keboola\CommonExceptions\UserExceptionInterface;
 use Keboola\OneDriveExtractor\Api\Helpers;
+use Keboola\OneDriveExtractor\Exception\ApiServerException;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
@@ -111,6 +116,46 @@ class HelpersTest extends TestCase
     public function testColumnStrToInt(int $expected, string $input): void
     {
         Assert::assertSame($expected, Helpers::columnStrToInt($input));
+    }
+
+    /**
+     * @dataProvider getRetryableHttpCodes
+     */
+    public function testProcessRetryFailedExceptionWrapsRetryableError(int $code): void
+    {
+        $response = new Response($code, [], (string) json_encode([
+            'error' => ['code' => 'serviceNotAvailable', 'message' => 'Service is temporarily unavailable.'],
+        ]));
+        $requestException = RequestException::create(new Request('GET', '/foo'), $response);
+
+        $result = Helpers::processRetryFailedException($requestException);
+
+        Assert::assertInstanceOf(ApiServerException::class, $result);
+        Assert::assertInstanceOf(UserExceptionInterface::class, $result);
+        Assert::assertSame($code, $result->getCode());
+        Assert::assertStringContainsString('Please try again later.', $result->getMessage());
+        Assert::assertStringContainsString((string) $code, $result->getMessage());
+        Assert::assertSame($requestException, $result->getPrevious());
+    }
+
+    public function testProcessRetryFailedExceptionKeepsNonRetryableError(): void
+    {
+        // 404 is not a retryable/transient code - the original exception must be returned unchanged.
+        $response = new Response(404, [], '');
+        $requestException = RequestException::create(new Request('GET', '/foo'), $response);
+
+        Assert::assertSame($requestException, Helpers::processRetryFailedException($requestException));
+    }
+
+    public function getRetryableHttpCodes(): array
+    {
+        return [
+            [409],
+            [429],
+            [500],
+            [502],
+            [503],
+        ];
     }
 
     public function getInputs(): array
