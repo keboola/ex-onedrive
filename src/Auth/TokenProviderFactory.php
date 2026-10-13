@@ -10,6 +10,13 @@ use Psr\Log\LoggerInterface;
 
 class TokenProviderFactory
 {
+    /**
+     * Optional per stack override of the Microsoft identity platform authority,
+     * set as "data.image_parameters.oneDriveAuthorityUrl" on the stack.
+     * The same key name is used by keboola/wr-onedrive.
+     */
+    private const AUTHORITY_URL_IMAGE_PARAMETER = 'oneDriveAuthorityUrl';
+
     private Config $config;
 
     private ArrayObject $stateObject;
@@ -30,6 +37,7 @@ class TokenProviderFactory
         return new RefreshTokenProvider(
             $this->config->getOAuthApiAppKey(),
             $this->config->getOAuthApiAppSecret(),
+            $this->config->getImageParameters()[self::AUTHORITY_URL_IMAGE_PARAMETER] ?? null,
             $tokenDataManager,
             $this->logger
         );
