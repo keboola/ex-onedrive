@@ -9,6 +9,8 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\SkippedTestError;
 use Keboola\OneDriveExtractor\Api\Api;
+use Keboola\OneDriveExtractor\Api\Batch\BatchRequest;
+use Keboola\OneDriveExtractor\Api\WorkbooksFinder;
 use Keboola\OneDriveExtractor\Exception\InvalidFileTypeException;
 use Keboola\OneDriveExtractor\Exception\ShareLinkException;
 use Keboola\OneDriveExtractor\Fixtures\FixturesCatalog;
@@ -255,5 +257,37 @@ class SearchForFileTest extends BaseTest
         $api = $mock;
         $files = iterator_to_array($api->searchWorkbooks('file_not_found_abc.xlsx'));
         Assert::assertCount(0, $files);
+    }
+
+    public function testSearchByTextFallsBackToGraphSearch(): void
+    {
+        // The batch sources find nothing, so the Graph Search API fallback runs.
+        // Fixtures are re-uploaded in every run and the search index lags behind,
+        // so only the request and the mapping are checked, not the number of hits.
+        /** @var Api&MockObject $api */
+        $api = $this
+            ->getMockBuilder(Api::class)
+            ->setConstructorArgs([$this->createGraphApi(), $this->logger, 2])
+            ->onlyMethods(['createBatchRequest', 'getSitesDrives'])
+            ->getMock();
+        $emptyBatch = $this
+            ->getMockBuilder(BatchRequest::class)
+            ->setConstructorArgs([$api])
+            ->onlyMethods(['addRequest'])
+            ->getMock();
+        $emptyBatch->method('addRequest')->willReturnSelf();
+        $api->method('createBatchRequest')->willReturn($emptyBatch);
+        $api->method('getSitesDrives')->willReturn(new ArrayIterator([]));
+
+        $finder = new WorkbooksFinder($api, $this->logger);
+        $files = iterator_to_array($finder->search('one_sheet'));
+
+        Assert::assertFalse($this->logger->hasWarningRecords(), 'Graph Search request failed.');
+        foreach ($files as $file) {
+            Assert::assertStringContainsString('one_sheet', $file->getName());
+            Assert::assertStringEndsWith('.xlsx', $file->getName());
+            Assert::assertNotSame('', $file->getDriveId());
+            Assert::assertNotSame('', $file->getFileId());
+        }
     }
 }
