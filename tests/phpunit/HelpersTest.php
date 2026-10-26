@@ -309,4 +309,62 @@ class HelpersTest extends TestCase
             [731, 'ABC'],
         ];
     }
+
+    public function testToKqlPhrase(): void
+    {
+        Assert::assertSame('"my file"', Helpers::toKqlPhrase('my file'));
+        Assert::assertSame('""', Helpers::toKqlPhrase(''));
+        // A double quote is replaced by a space, so it cannot change the query
+        Assert::assertSame('"a OR b"', Helpers::toKqlPhrase('a"OR"b'));
+    }
+
+    public function testExtractDriveItemsFromSearchResponse(): void
+    {
+        $body = [
+            'value' => [
+                [
+                    'searchTerms' => ['report'],
+                    'hitsContainers' => [
+                        [
+                            'hits' => [
+                                ['hitId' => '1', 'resource' => ['id' => 'file1', 'name' => 'report.xlsx']],
+                                ['hitId' => '2', 'resource' => ['id' => 'file2', 'name' => 'report.docx']],
+                            ],
+                            'total' => 2,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        Assert::assertSame(
+            [
+                ['id' => 'file1', 'name' => 'report.xlsx'],
+                ['id' => 'file2', 'name' => 'report.docx'],
+            ],
+            Helpers::extractDriveItemsFromSearchResponse($body)
+        );
+    }
+
+    /**
+     * @dataProvider getInvalidSearchResponses
+     */
+    public function testExtractDriveItemsFromInvalidSearchResponse(array $body): void
+    {
+        Assert::assertSame([], Helpers::extractDriveItemsFromSearchResponse($body));
+    }
+
+    public function getInvalidSearchResponses(): array
+    {
+        return [
+            'empty' => [[]],
+            'value-not-array' => [['value' => 'foo']],
+            'value-empty' => [['value' => []]],
+            'no-hits-containers' => [['value' => [['searchTerms' => ['x']]]]],
+            'hits-not-array' => [['value' => [['hitsContainers' => [['hits' => 'foo']]]]]],
+            'hits-empty' => [['value' => [['hitsContainers' => [['hits' => [], 'total' => 0]]]]]],
+            'hit-without-resource' => [['value' => [['hitsContainers' => [['hits' => [['hitId' => '1']]]]]]]],
+            'resource-not-array' => [['value' => [['hitsContainers' => [['hits' => [['resource' => 'foo']]]]]]]],
+        ];
+    }
 }

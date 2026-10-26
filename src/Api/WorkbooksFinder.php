@@ -18,6 +18,9 @@ use Psr\Log\LoggerInterface;
 
 class WorkbooksFinder
 {
+    // The Search API is an extra source, so a failing request must not slow the job down
+    public const SEARCH_API_MAX_ATTEMPTS = 3;
+
     public const ALLOWED_MIME_TYPES = [
         # Only XLSX files can by accessed through API
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -189,7 +192,11 @@ class WorkbooksFinder
             $this->getExceptionProcessor('me drive', $search)
         );
 
-        // Add files shared with me
+        // Add files shared with me.
+        // DEPRECATED: this endpoint operates in a degraded state and stops returning data in November 2026.
+        // See: https://learn.microsoft.com/en-us/graph/api/drive-sharedwithme
+        // It is kept, because it is the only source of shared files for personal Microsoft accounts,
+        // which the Graph Search API (see searchSharedFilesByGraphSearch) does not support.
         $uriTemplate = '/me/drive/sharedWithMe?$select={select}&$top={limit}';
         $batch->addRequest(
             $uriTemplate,
@@ -216,8 +223,136 @@ class WorkbooksFinder
             // 'Error when searching for sites: ' . $exception->getMessage());
         }
 
-        // Fetch all in one request
-        return $batch->execute();
+        // Fetch all in one request.
+        // If no file is found, shared files are searched again with the Graph Search API.
+        return $this->searchSharedFilesIfNothingFound($batch->execute(), $search, $limitPerRequest);
+    }
+
+    /**
+     * Yields the files from the other sources. Only if they find nothing, the Graph Search API is used.
+     *
+     * The fallback cannot change the result of a configuration that works now:
+     * - If the other sources find one or more files, the Search API is not called.
+     * - Therefore the Search API can only change "no file found" to "one or more files found".
+     *
+     * @param iterable<File> $files files from the other sources
+     * @return Iterator|File[]
+     */
+    private function searchSharedFilesIfNothingFound(iterable $files, string $search, int $limit): Iterator
+    {
+        $found = false;
+        foreach ($files as $file) {
+            $found = true;
+            yield $file;
+        }
+
+        if ($found) {
+            return;
+        }
+
+        foreach ($this->searchSharedFilesByGraphSearch($search, $limit) as $file) {
+            yield $file;
+        }
+    }
+
+    /**
+     * Searches for files with the Microsoft Graph Search API.
+     *
+     * This is the replacement source for the deprecated "/me/drive/sharedWithMe" endpoint,
+     * which stops returning data in November 2026.
+     * The Search API reads the SharePoint index, so it also finds files that are shared
+     * with the user, but are not in the personal drive or in an enumerated SharePoint site.
+     * See: https://learn.microsoft.com/en-us/graph/api/search-query
+     *
+     * The deprecated endpoint is kept as a second source, because the Search API
+     * is not supported for personal Microsoft accounts.
+     *
+     * An error is only caught, never thrown, so a failed search behaves as before.
+     *
+     * @return Iterator|File[]
+     */
+    private function searchSharedFilesByGraphSearch(string $search, int $limit): Iterator
+    {
+        // KQL: search the file name, and take only XLSX files, because only they can be read
+        $query = $search === ''
+            ? 'filetype:xlsx'
+            : sprintf('%s AND filetype:xlsx', Helpers::toKqlPhrase($search));
+
+        try {
+            $response = $this->api->post(
+                '/search/query',
+                [],
+                [
+                    'requests' => [
+                        [
+                            'entityTypes' => ['driveItem'],
+                            'query' => ['queryString' => $query],
+                            'from' => 0,
+                            'size' => $limit,
+                        ],
+                    ],
+                ],
+                [],
+                self::SEARCH_API_MAX_ATTEMPTS
+            );
+            $items = Helpers::extractDriveItemsFromSearchResponse($response->getBody());
+
+            $files = [];
+            foreach ($items as $item) {
+                $file = self::mapSearchItemToFile($item, $search);
+                if ($file !== null) {
+                    $files[] = $file;
+                }
+            }
+        } catch (Throwable $e) {
+            // The Search API is one source of many, a problem must not stop the search
+            $this->logger->warning(sprintf(
+                'Error when searching for "%s" with the Search API: "%s".',
+                $search,
+                Helpers::getErrorFromRequestException($e) ?? $e->getMessage(),
+            ));
+            return;
+        }
+
+        foreach ($files as $file) {
+            yield $file;
+        }
+    }
+
+    /**
+     * Converts one "driveItem" from the Search API to a File, or returns null if it must be skipped.
+     *
+     * The Search API does not return the "file" facet, so the XLSX type is checked with the file name.
+     * The name filter is the same as in getMapToFileCallback, so both sources behave the same.
+     *
+     * The method is public, because it is a pure function and it is tested directly.
+     */
+    public static function mapSearchItemToFile(array $item, string $search): ?File
+    {
+        $fileId = $item['id'] ?? null;
+        $name = $item['name'] ?? null;
+        $parentReference = $item['parentReference'] ?? null;
+        $driveId = is_array($parentReference) ? ($parentReference['driveId'] ?? null) : null;
+
+        // Skip if a needed value is missing or empty
+        if (!is_string($fileId) || !is_string($name) || !is_string($driveId)) {
+            return null;
+        }
+        if ($fileId === '' || $name === '' || $driveId === '') {
+            return null;
+        }
+
+        // Skip if not an XLSX file, only XLSX files can be accessed through the API
+        if (preg_match('~\.xlsx$~i', $name) !== 1) {
+            return null;
+        }
+
+        // Skip if file name doesn't contains searched string
+        if ($search && strpos($name, $search) === false) {
+            return null;
+        }
+
+        return File::from($item, ['shared']);
     }
 
     private function getMapToFileCallback(array $path, string $search): callable
