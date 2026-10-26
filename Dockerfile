@@ -11,6 +11,16 @@ WORKDIR /code/
 COPY docker/php-prod.ini /usr/local/etc/php/php.ini
 COPY docker/composer-install.sh /tmp/composer-install.sh
 
+# Debian 11 (bullseye) reached end of life, so its packages were moved off
+# deb.debian.org to archive.debian.org. Without this the image stopped building
+# with "404 Not Found" on every package.
+RUN sed -i \
+        -e 's|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g' \
+        -e 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' \
+        -e 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' \
+        /etc/apt/sources.list \
+    && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         locales \
