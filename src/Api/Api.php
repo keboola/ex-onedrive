@@ -363,6 +363,31 @@ class Api
     }
 
     /**
+     * Get worksheets without creating a session or loading headers.
+     * This is optimized for sync actions where we only need the worksheet list.
+     *
+     * @return Iterator|Worksheet[]
+     */
+    public function getWorksheetsLight(string $driveId, string $fileId): Iterator
+    {
+        // Load list of worksheets without session
+        $uri = '/drives/{driveId}/items/{fileId}/workbook/worksheets?$select=id,position,name,visibility';
+        $body = $this
+            ->get($uri, ['driveId' => $driveId, 'fileId' => $fileId])
+            ->getBody();
+
+        // Map to worksheet objects without headers
+        $worksheets = [];
+        foreach ($body['value'] as $data) {
+            $worksheets[] = Worksheet::from($data, $driveId, $fileId);
+        }
+
+        // Sort by position
+        usort($worksheets, fn(Worksheet $a, Worksheet $b) => $a->getPosition() - $b->getPosition());
+        yield from $worksheets;
+    }
+
+    /**
      * @return Iterator|Drive[]
      */
     public function getSitesDrives(): Iterator
